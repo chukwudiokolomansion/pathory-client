@@ -17,7 +17,7 @@ const generateAISuggestion = async (
       `;
 
       const response = await axios.post(
-         'YOUR_BACKEND_AI_ENDPOINT',
+      "http://localhost:5005/api/ai/memory",
          { prompt }
       );
 
@@ -33,3 +33,4 @@ const generateAISuggestion = async (
 };
 
 export default generateAISuggestion 
+
