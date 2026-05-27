@@ -1,4 +1,4 @@
-import {useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
@@ -17,9 +17,16 @@ import SignupPage from "./pages/SignupPage";
 import IsPrivate from "./components/IsPrivate";
 import IsAnon from "./components/IsAnon";
 
+import { startTracking } from "./services/locationTracker";
+
+
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+useEffect(() => {
+  startTracking();
+}, []);
 
   return (
     <div className="App relative z-20 pt-20">
@@ -30,11 +37,11 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/dashboard" element={<PlannerListPage />} />
           <Route path="/activities" element={<ActivityListPage />} />
-          <Route path="/cohorts/details/:cohortId" element={<PlannerDetailsPage />} />
-          <Route path="/cohorts/edit/:cohortId" element={<PlannerEditPage />} />
-          <Route path="/cohorts/create" element={<PlannerCreatePage />} />
-          <Route path="/activities/details/:studentId" element={<ActivityDetailsPage />} />
-          <Route path="/activities/edit/:studentId" element={<ActivityEditPage />} />
+          <Route path="/planners/details/:plannerId" element={<PlannerDetailsPage />} />
+          <Route path="/planners/edit/:plannerId" element={<PlannerEditPage />} />
+          <Route path="/planners/create" element={<PlannerCreatePage />} />
+          <Route path="/activities/details/:activityId" element={<ActivityDetailsPage />} />
+          <Route path="/activities/edit/:activityId" element={<ActivityEditPage />} />
           <Route path="/profile" element={ <IsPrivate><UserProfilePage /></IsPrivate>} />
           <Route path="/login" element={<IsAnon><LoginPage /></IsAnon>} />
           <Route path="/signup" element={<IsAnon><SignupPage /></IsAnon>} />
