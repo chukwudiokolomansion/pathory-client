@@ -1,4 +1,4 @@
-import * as Location from "expo-location";
+/*import * as Location from "expo-location";
 import { getDistance } from "geolib";
 import { generateAISuggestion } from "./services/aiService";
 
@@ -55,4 +55,4 @@ async function startTracking() {
   );
 }
 
-export default startTracking;
+export default startTracking;*/

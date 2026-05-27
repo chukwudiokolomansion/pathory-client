@@ -17,16 +17,16 @@ import SignupPage from "./pages/SignupPage";
 import IsPrivate from "./components/IsPrivate";
 import IsAnon from "./components/IsAnon";
 
-import { startTracking } from "./services/locationTracker";
+//import { startTracking } from "./services/locationTracker";
 
 
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-useEffect(() => {
-  startTracking();
-}, []);
+//useEffect(() => {
+//  startTracking();
+//}, []);
 
   return (
     <div className="App relative z-20 pt-20">
