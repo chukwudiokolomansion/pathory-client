@@ -28,7 +28,7 @@ function ActivityCreateForm({ plannerId, plannerName, callback, closeCallback })
     setSubmitting(true);
 
     axios
-      .post(`${API_URL}/api/activitys`, requestBody)
+      .post(`${API_URL}/api/activities`, requestBody)
       .then(() => {
         // Reset the state to clear the inputs
         setActivity({ ...DEFAULT_ACTIVITY_FORM_VALUES, planner: plannerId });

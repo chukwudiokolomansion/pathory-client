@@ -143,7 +143,7 @@ className={`drawer transition-transform transform ${
 
         {loading && <div>Loading...</div>}
 
-        {activitys &&
+        {activities &&
           activities.map((activity) => (
             <ActivityCard key={activity._id} {...activity} />
           ))}

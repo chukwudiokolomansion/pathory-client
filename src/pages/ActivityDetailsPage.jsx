@@ -15,7 +15,7 @@ function ActivityDetailsPage() {
   useEffect(() => {
     const getActivity = () => {
       axios
-        .get(`${API_URL}/api/activitys/${activityId}`)
+        .get(`${API_URL}/api/activities/${activityId}`)
         .then((response) => {
           const oneActivity = response.data;
           setActivity(oneActivity);
