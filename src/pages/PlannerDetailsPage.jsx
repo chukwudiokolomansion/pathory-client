@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
+
 import ActivityCard from "../components/ActivityCard";
 import ActivityCreateForm from "../components/ActivityCreateForm";
 
-// Import the string from the .env with URL of the API/server - http://localhost:5005
 const API_URL = import.meta.env.VITE_API_URL;
 
 function PlannerDetailsPage() {
+
   const [planner, setPlanner] = useState(null);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,44 +17,44 @@ function PlannerDetailsPage() {
 
   const { plannerId } = useParams();
 
+  // GET PLANNER
   const getPlanner = useCallback(() => {
     axios
       .get(`${API_URL}/api/planners/${plannerId}`)
-      .then((response) => {
-        const onePlanner = response.data;
-        setPlanner(onePlanner);
+      .then((res) => {
+        setPlanner(res.data);
       })
-      .catch((error) => console.log(error));
+      .catch((err) => console.log(err));
   }, [plannerId]);
 
+  // GET ACTIVITIES INSIDE PLANNER
   const getActivities = useCallback(() => {
     axios
-      .get(`${API_URL}/api/Activities/planner/${plannerId}`)
-      .then((response) => {
-        const allPlanners = response.data;
-        setActivities(allActivities);
+      .get(`${API_URL}/api/activities?plannerId=${plannerId}`)
+      .then((res) => {
+        setActivities(res.data);
       })
-      .catch((error) => console.log(error));
+      .catch((err) => console.log(err));
   }, [plannerId]);
 
   useEffect(() => {
     getPlanner();
     getActivities();
     setLoading(false);
-  }, [plannerId, getPlanner, getActivities]);
+  }, [getPlanner, getActivities]);
 
   return (
-    <div className={`PlannerDetails bg-gray-100 py-6 px-4`}>
-      {/* Drawer */}
+    <div className="PlannerDetails bg-gray-100 py-6 px-4">
+
+      {/* DRAWER (ADD ACTIVITY) */}
       <div
-className={`drawer transition-transform transform ${
-       showDrawer ? "translate-x-0" : "translate-x-full"
-     } fixed right-0 top-0 h-full bg-white shadow-md z-10`}
+        className={`drawer transition-transform transform ${
+          showDrawer ? "translate-x-0" : "translate-x-full"
+        } fixed right-0 top-0 h-full bg-white shadow-md z-10`}
       >
         {planner && showDrawer && (
           <ActivityCreateForm
             plannerId={planner._id}
-            plannerName={planner.plannerName}
             callback={() => {
               setShowDrawer(false);
               getActivities();
@@ -63,90 +64,92 @@ className={`drawer transition-transform transform ${
         )}
       </div>
 
-
+      {/* MAIN CONTENT */}
       <div
-        className={`PlannerDetails bg-gray-100 py-6 px-4 ${
+        className={`bg-gray-100 py-6 px-4 ${
           showDrawer ? "opacity-30 pointer-events-none" : ""
         }`}
       >
-        {/* Planner details */}
-        <div className="bg-white p-8  px-24 rounded-lg shadow-md mb-6">
+
+        {/* PLANNER DETAILS */}
+        <div className="bg-white p-8 px-24 rounded-lg shadow-md mb-6">
+
           {planner && (
             <>
               <h1 className="text-2xl font-semibold mb-4">
-                {planner.plannerName}
+                {planner.title}
               </h1>
-              <br />
 
               <div className="grid grid-cols-2 gap-6 mb-4 border-b pb-4">
+
+                {/* LEFT SIDE */}
                 <div className="text-left pr-4 border-r">
+
                   <p className="mb-2 border-b pb-2">
-                    <strong>Title:</strong> {planner.title}
+                    <strong>Destination:</strong> {planner.destination || "—"}
                   </p>
+
                   <p className="mb-2 border-b pb-2">
-                    <strong>Destination:</strong> {planner.destination}
+                    <strong>Start Date:</strong>{" "}
+                    {new Date(planner.startDate).toLocaleDateString()}
                   </p>
+
                   <p className="mb-2 border-b pb-2">
-                    <strong>Start Date:</strong> {planner.startDate}
+                    <strong>End Date:</strong>{" "}
+                    {new Date(planner.endDate).toLocaleDateString()}
                   </p>
-                  <p className="mb-2 border-b pb-2">
-                    <strong>End Date:</strong> {planner.endDate}
-                  </p>
+
                 </div>
+
+                {/* RIGHT SIDE */}
                 <div className="text-left pl-4">
+
                   <p className="mb-2 border-b pb-2">
-                    <strong>Status:</strong>{" "}
-                    {planner.inProgress ? "In Progress" : "Not Started"}
+                    <strong>Status:</strong> {planner.status}
                   </p>
+
                   <p className="mb-2 border-b pb-2">
-                    <strong>Total Hours:</strong> {planner.totalHours}
+                    <strong>Description:</strong>{" "}
+                    {planner.description || "No description"}
                   </p>
-                  <p className="mb-2 border-b pb-2">
-                    <strong>Title Manager:</strong> {planner.programManager}
-                  </p>
-                  <p className="mb-2 border-b pb-2">
-                    <strong>Lead Teacher:</strong> {planner.leadTeacher}
-                  </p>
+
                 </div>
+
               </div>
 
+              {/* ACTIONS */}
               <div className="flex flex-col items-center gap-2 mt-6 w-2/3 mx-auto">
+
                 <Link to={`/planners/edit/${plannerId}`} className="w-full">
-                  <button
-                    disabled={showDrawer}
-                    className={`transition duration-300 ease-in-out text-white px-4 py-2 w-full rounded ${
-                      showDrawer
-                        ? "bg-gray-500 hover:bg-gray-500"
-                        : "bg-green-500 hover:bg-green-600"
-                    }`}
-                  >
+                  <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 w-full rounded">
                     Edit Planner
                   </button>
                 </Link>
+
                 <button
-                  disabled={showDrawer}
-                  className={`transition duration-300 ease-in-out text-white px-4 py-2 w-full rounded hover:bg-blue-600 ${
-                    showDrawer
-                      ? "bg-gray-500 hover:bg-gray-500"
-                      : "bg-blue-500 hover:bg-blue-600"
-                  }`}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 w-full rounded"
                   onClick={() => setShowDrawer(true)}
                 >
-                  Add Activity
+                  Add Activity (Memory)
                 </button>
+
               </div>
+
             </>
           )}
+
         </div>
 
-        <h2 className="text-xl mb-4">Activities</h2>
+        {/* ACTIVITIES LIST */}
+        <h2 className="text-xl mb-4">Activities (Memories)</h2>
 
         {loading && <div>Loading...</div>}
 
         {activities &&
           activities.map((activity) => (
-            <ActivityCard key={activity._id} {...activity} />
+            <ActivityCard key={activity._id} activity={activity} />
           ))}
+
       </div>
     </div>
   );

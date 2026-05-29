@@ -1,93 +1,124 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import placeholderImage from "./../assets/placeholder.png";
 
-// Import the string from the .env with URL of the API/server - http://localhost:5005
 const API_URL = import.meta.env.VITE_API_URL;
 
-
 function ActivityDetailsPage() {
+
   const [activity, setActivity] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const { activityId } = useParams();
 
   useEffect(() => {
-    const getActivity = () => {
-      axios
-        .get(`${API_URL}/api/activities/${activityId}`)
-        .then((response) => {
-          const oneActivity = response.data;
-          setActivity(oneActivity);
-          setLoading(false);
-        })
-        .catch((error) => console.log(error));
-    };
-
-    getActivity();
+    axios
+      .get(`${API_URL}/api/activities/${activityId}`)
+      .then((res) => {
+        setActivity(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+      });
   }, [activityId]);
-  
+
   if (loading) return <div>Loading...</div>;
 
+  if (!activity) return <div>No activity found</div>;
+
   return (
-    <div className="ActivityDetailsPage bg-gray-100 py-6 px-4">
-      <div className="bg-white p-8 rounded-lg shadow-md mb-6">
-        {activity && (
-          <>
-            {/* <img className="w-32 h-32 rounded-full object-cover mb-4" src={activity.image} alt="profile-photo" /> */}
-            <img
-            src={activity.image || placeholderImage}
-            alt="profile-photo"
-            className="rounded-full w-32 h-32 object-cover border-2 border-gray-300"
-            onError={({ currentTarget }) => {
-              currentTarget.onerror = null;
-              currentTarget.src = placeholderImage;
-            }}
-          />            
-            <h1 className="text-2xl mt-4 font-bold absolute">{activity.firstName} {activity.lastName}</h1>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-24 mb-4 border-b pb-4">
-              <p className="text-left mb-2 border-b pb-2">
-                <strong>Email:</strong> {activity.email}
-              </p>
-              <p className="mb-2 text-left">
-                <strong>Phone:</strong> {activity.phone}
-              </p>
-              <p className="text-left mb-2 border-b pb-2">
-                <strong>LinkedIn:</strong> {activity.linkedinUrl}
-              </p>
-              <p className="text-left mb-2 border-b pb-2">
-                <strong>Languages:</strong> {activity.languages.join(", ")}
-              </p>
-              <p className="text-left mb-2 border-b pb-2">
-                <strong>Title:</strong> {activity.title}
-              </p>
-              <p className="text-left mb-2 border-b pb-2">
-                <strong>Background:</strong> {activity.background}
-              </p>
-              <p className="text-left mb-2 border-b pb-2">
-                <strong>Cohort:</strong> 
-                <Link className="ml-2 text-blue-500 hover:underline" to={`/planners/details/${activity.planner._id}`}>
-                  {activity.planner.plannerName}
-                </Link>
-              </p>
-              {activity && activity.projects.length > 0 && (
-              <p className="text-left mb-2 border-b pb-2">
-                <strong>Projects:</strong> {activity.projects}
-              </p>
-              )}
-            </div>
-            <div className="mt-4">
-              <Link to={`/activity/edit/${activity._id}`}>
-                <button className="text-white px-4 py-2 rounded bg-green-500 hover:bg-green-600 transition duration-300 ease-in-out">
-                  Edit
-                </button>
-              </Link>
-            </div>
-          </>
+    <div className="ActivityDetailsPage bg-gray-100 p-6">
+
+      <div className="bg-white p-6 rounded-lg shadow-md">
+
+        {/* TITLE */}
+        <h1 className="text-2xl font-bold mb-2">
+          {activity.title}
+        </h1>
+
+        {/* AI DESCRIPTION */}
+        {activity.aiDescription && (
+          <p className="italic text-gray-600 mb-4">
+            🤖 {activity.aiDescription}
+          </p>
         )}
+
+        {/* MAIN INFO GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+
+          <p><strong>Type:</strong> {activity.activityType}</p>
+
+          <p>
+            <strong>Location:</strong>{" "}
+            {activity.city}, {activity.country}
+          </p>
+
+          <p>
+            <strong>Address:</strong>{" "}
+            {activity.address || "N/A"}
+          </p>
+
+          <p>
+            <strong>Weather:</strong>{" "}
+            {activity.weather || "N/A"}
+          </p>
+
+          <p>
+            <strong>Coordinates:</strong>{" "}
+            {activity.coordinates?.join(", ") || "N/A"}
+          </p>
+
+        </div>
+
+        {/* TAGS */}
+        {activity.tag?.length > 0 && (
+          <div className="mt-4">
+            <strong>Tags:</strong>
+            <div className="flex gap-2 mt-1 flex-wrap">
+              {activity.tag.map((t, i) => (
+                <span
+                  key={i}
+                  className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-sm"
+                >
+                  #{t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* MEDIA */}
+        <div className="mt-6">
+
+          {activity.image?.length > 0 && (
+            <img
+              src={activity.image[0] || placeholderImage}
+              alt="activity"
+              className="w-full h-64 object-cover rounded"
+            />
+          )}
+
+          {activity.video?.length > 0 && (
+            <video controls className="w-full mt-4 rounded">
+              <source src={activity.video[0]} />
+            </video>
+          )}
+
+        </div>
+
+        {/* BACK BUTTON */}
+        <div className="mt-6">
+          <Link to="/activities">
+            <button className="bg-blue-500 text-white px-4 py-2 rounded">
+              Back to Activities
+            </button>
+          </Link>
+        </div>
+
       </div>
-      
     </div>
   );
 }
