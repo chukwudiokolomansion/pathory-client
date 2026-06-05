@@ -10,60 +10,94 @@ function PlannerFilterBar({
   handleChange,
 }) {
   return (
-    <div className="filter-bar flex justify-between items-center mb-4 p-3 px-6 bg-gray-200 rounded">
+    <div className="bg-white shadow-sm rounded-xl border border-gray-200 p-4 mb-6 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
 
-      {/* FILTER SECTION */}
-      <div className="flex flex-wrap items-center gap-6">
+      {/* FILTERS */}
+      <div className="flex flex-col md:flex-row gap-4">
 
-        {/* TITLE SEARCH */}
-        <label className="flex items-center gap-2">
-          <span>Search:</span>
+        {/* DESTINATION */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="destination"
+            className="text-sm font-medium mb-1"
+          >
+            Destination
+          </label>
+
           <input
             type="text"
-            value={titleQuery}
-            placeholder="Planner title..."
-            onChange={(e) => handleChange(e, setTitleQuery)}
-            className="p-1 rounded border"
-          />
-        </label>
-
-        {/* DESTINATION FILTER */}
-        <label className="flex items-center gap-2">
-          <span>Destination:</span>
-          <input
-            type="text"
+            name="destination"
+            id="destination"
+            placeholder="Search destination..."
             value={destinationQuery}
-            placeholder="e.g. Paris"
-            onChange={(e) => handleChange(e, setDestinationQuery)}
-            className="p-1 rounded border"
+            onChange={(e) =>
+              handleChange(e, setDestinationQuery)
+            }
+            className="border rounded-lg px-3 py-2"
           />
-        </label>
+        </div>
 
-        {/* STATUS FILTER */}
-        <label className="flex items-center gap-2">
-          <span>Status:</span>
+        {/* TITLE */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="title"
+            className="text-sm font-medium mb-1"
+          >
+            Title
+          </label>
+
+          <input
+            type="text"
+            name="title"
+            id="title"
+            placeholder="Search title..."
+            value={titleQuery}
+            onChange={(e) =>
+              handleChange(e, setTitleQuery)
+            }
+            className="border rounded-lg px-3 py-2"
+          />
+        </div>
+
+        {/* STATUS */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="status"
+            className="text-sm font-medium mb-1"
+          >
+            Status
+          </label>
+
           <select
+            name="status"
+            id="status"
             value={statusQuery}
-            onChange={(e) => handleChange(e, setStatusQuery)}
-            className="p-1 rounded border"
+            onChange={(e) =>
+              handleChange(e, setStatusQuery)
+            }
+            className="border rounded-lg px-3 py-2"
           >
             <option value="">All</option>
             <option value="pending">Pending</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="in-progress">
+              In Progress
+            </option>
+            <option value="completed">
+              Completed
+            </option>
+            <option value="cancelled">
+              Cancelled
+            </option>
           </select>
-        </label>
-
+        </div>
       </div>
 
       {/* CREATE BUTTON */}
-      <Link to="/planners/create" className="ml-auto">
-        <button className="px-6 py-1 rounded bg-blue-600 text-white hover:bg-blue-500">
-          Create Planner
+      <Link to="/planners/create">
+        <button className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg transition duration-200">
+          + Create Planner
         </button>
       </Link>
-
     </div>
   );
 }

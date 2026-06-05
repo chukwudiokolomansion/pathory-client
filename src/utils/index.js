@@ -1,47 +1,48 @@
 export function getFormattedDate(dateString) {
-  if (!dateString) dateString = new Date().toISOString();
-  return dateString.split('T')[0];
+  if (!dateString) return new Date().toISOString().split("T")[0];
+
+  return new Date(dateString).toISOString().split("T")[0];
+}
+
+export function createPlannerSlug({ title }) {
+  if (!title) return "planner";
+
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 60);
 }
 
 export function convertSlugToName(slug) {
+  if (!slug) return "";
+
   return slug
     .replaceAll("-", " ")
-    .toUpperCase()
-    .slice(0, slug.length - 2);
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export function createPlannerSlug({ format, program, campus, startDate }) {
-  const plannerFormat = getFormatAcronym(format);
-  const plannerProgram = getProgramAcronym(program);
-
-  const plannerCampus = campus.length === 0 ? "campus" : campus.toLowerCase();
-  const plannerStartDate = startDate.length === 0 ? "startDate" : startDate;
-
-  return `${plannerFormat}-${plannerProgram}-${plannerCampus}-${plannerStartDate}`;
-}
-
-function getProgramAcronym(program) {
-  switch (program) {
-    case "Web Dev":
-      return "wd";
-    case "UX/UI":
-      return "ux";
-    case "Data Analytics":
-      return "da";
-    case "Cybersecurity":
-      return "cy";
+export function formatPlannerStatus(status) {
+  switch (status) {
+    case "pending":
+      return "🟡 Pending";
+    case "in-progress":
+      return "🔵 In Progress";
+    case "completed":
+      return "🟢 Completed";
+    case "cancelled":
+      return "🔴 Cancelled";
     default:
-      return "program";
+      return "Unknown";
   }
 }
 
-function getFormatAcronym(format) {
-  switch (format) {
-    case "Full Time":
-      return "ft";
-    case "Part Time":
-      return "pt";
-    default:
-      return "format";
-  }
+export function formatPlannerDuration(startDate, endDate) {
+  if (!startDate || !endDate) return "";
+
+  const start = new Date(startDate).toLocaleDateString();
+  const end = new Date(endDate).toLocaleDateString();
+
+  return `${start} → ${end}`;
 }

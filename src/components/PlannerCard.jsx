@@ -4,49 +4,77 @@ function PlannerCard({
   _id,
   title,
   description,
-  startDate,
-  endDate,
   destination,
   status,
-  className,
+  startDate,
+  endDate,
+  className = "",
 }) {
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+
+    return new Date(date).toLocaleDateString();
+  };
+
+  const statusColors = {
+    pending: "bg-yellow-100 text-yellow-700",
+    "in-progress": "bg-blue-100 text-blue-700",
+    completed: "bg-green-100 text-green-700",
+    cancelled: "bg-red-100 text-red-700",
+  };
+
   return (
     <Link to={`/planners/details/${_id}`}>
       <div
-        className={`PlannerCard flex flex-col p-4 mb-3 bg-white shadow-sm rounded border border-gray-200 hover:bg-gray-50 transition ${className}`}
+        className={`bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:bg-gray-50 transition duration-200 p-5 mb-4 ${className}`}
       >
-        {/* TITLE */}
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold">{title}</h3>
 
-          {/* STATUS BADGE */}
-          <span className="text-sm px-2 py-1 rounded bg-gray-100">
-            {status === "pending" && "🟡 Pending"}
-            {status === "in-progress" && "🔵 In Progress"}
-            {status === "completed" && "🟢 Completed"}
-            {status === "cancelled" && "🔴 Cancelled"}
+        {/* HEADER */}
+        <div className="flex justify-between items-start gap-4">
+
+          <div>
+            <h2 className="text-lg font-semibold">
+              {title}
+            </h2>
+
+            {description && (
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                {description}
+              </p>
+            )}
+          </div>
+
+          {/* STATUS */}
+          <span
+            className={`text-xs px-3 py-1 rounded-full capitalize ${
+              statusColors[status] ||
+              "bg-gray-100 text-gray-700"
+            }`}
+          >
+            {status}
           </span>
         </div>
 
-        {/* DESTINATION */}
-        <p className="text-sm text-gray-600 mt-1">
-          📍 {destination || "No destination set"}
-        </p>
+        {/* DETAILS */}
+        <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
 
-        {/* DESCRIPTION */}
-        <p className="text-sm mt-2 text-gray-700 line-clamp-2">
-          {description || "No description provided"}
-        </p>
+          {/* DESTINATION */}
+          {destination && (
+            <div>
+              📍 <span>{destination}</span>
+            </div>
+          )}
 
-        {/* DATES */}
-        <div className="flex justify-between mt-3 text-xs text-gray-500">
-          <span>
-            Start: {new Date(startDate).toLocaleDateString()}
-          </span>
+          {/* START DATE */}
+          <div>
+            📅 Start: {formatDate(startDate)}
+          </div>
 
-          <span>
-            End: {new Date(endDate).toLocaleDateString()}
-          </span>
+          {/* END DATE */}
+          <div>
+            🏁 End: {formatDate(endDate)}
+          </div>
+
         </div>
       </div>
     </Link>

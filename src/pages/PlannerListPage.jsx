@@ -1,76 +1,219 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import service from "../services/index.services";
+
+import PlannerFilterBar from "../components/PlannerFilterBar";
 import PlannerCard from "../components/PlannerCard";
 
-const API_URL = import.meta.env.VITE_API_URL;
 
 function PlannerListPage() {
-  const [planners, setPlanners] = useState([]);
-  const [statusQuery, setStatusQuery] = useState("");
+  const [planners, setPlanners] =
+    useState([]);
 
-  useEffect(() => {
-    let queryString = "";
-    if (statusQuery) queryString += `status=${statusQuery}`;
+  const [destinationQuery, setDestinationQuery] =
+    useState("");
 
-    axios
-      .get(`${API_URL}/api/planners?${queryString}`)
-      .then((response) => {
-        setPlanners(response.data);
-      })
-      .catch((error) => console.log(error));
-  }, [statusQuery]);
+  const [titleQuery, setTitleQuery] =
+    useState("");
 
-  const getAllPlanners = () => {
-    axios
-      .get(`${API_URL}/api/planners`)
-      .then((response) => {
-        setPlanners(response.data);
-      })
-      .catch((error) => console.log(error));
+  const [statusQuery, setStatusQuery] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState(null);
+
+  // Handle filter changes
+  const handleChange = (
+    event,
+    updateState
+  ) => {
+    updateState(event.target.value);
   };
 
+  // Fetch planners
   useEffect(() => {
-    getAllPlanners();
-  }, []);
+    const fetchPlanners = async () => {
+      try {
+        setLoading(true);
+
+        // Build query params
+        const params =
+          new URLSearchParams();
+
+        if (destinationQuery) {
+          params.append(
+            "destination",
+            destinationQuery
+          );
+        }
+
+        if (titleQuery) {
+          params.append(
+            "title",
+            titleQuery
+          );
+        }
+
+        if (statusQuery) {
+          params.append(
+            "status",
+            statusQuery
+          );
+        }
+
+        const response =
+          await service.get(
+            `/planners?${params.toString()}`,
+            {
+              withCredentials: true,
+            }
+          );
+
+        setPlanners(response.data);
+
+        setError(null);
+      } catch (err) {
+        console.log(err);
+
+        setError(
+          "Failed to load planners."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlanners();
+  }, [
+    destinationQuery,
+    titleQuery,
+    statusQuery,
+  ]);
 
   return (
-    <div className="PlannerListPage">
+    <div className="PlannerListPage space-y-6 p-4">
+      {/* FILTER BAR */}
+      <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col md:flex-row gap-4">
+        {/* Existing Filter Bar */}
+        <PlannerFilterBar
+          destinationQuery={
+            destinationQuery
+          }
+          setDestinationQuery={
+            setDestinationQuery
+          }
+          titleQuery={titleQuery}
+          setTitleQuery={
+            setTitleQuery
+          }
+          handleChange={
+            handleChange
+          }
+        />
 
-      {/* Simple filter (based on your schema) */}
-      <div className="flex items-center gap-4 p-4 border-b">
-        <label className="font-bold">Status:</label>
+        {/* STATUS FILTER */}
+        <div className="flex flex-col gap-1 min-w-[180px]">
+          <label className="text-sm font-semibold text-gray-700">
+            Status
+          </label>
 
-        <select
-          value={statusQuery}
-          onChange={(e) => setStatusQuery(e.target.value)}
-          className="border p-2"
-        >
-          <option value="">All</option>
-          <option value="pending">Pending</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+          <select
+            value={statusQuery}
+            onChange={(e) =>
+              setStatusQuery(
+                e.target.value
+              )
+            }
+            className="border rounded p-2"
+          >
+            <option value="">
+              All Statuses
+            </option>
+
+            <option value="pending">
+              Pending
+            </option>
+
+            <option value="in-progress">
+              In Progress
+            </option>
+
+            <option value="completed">
+              Completed
+            </option>
+
+            <option value="cancelled">
+              Cancelled
+            </option>
+          </select>
+        </div>
       </div>
 
-      {/* Header */}
-      <div className="flex justify-between items-center p-2 font-bold border-b">
-        <span style={{ flexBasis: "25%" }}>Title</span>
-        <span style={{ flexBasis: "20%" }}>Start Date</span>
-        <span style={{ flexBasis: "20%" }}>End Date</span>
-        <span style={{ flexBasis: "15%" }}>Status</span>
-        <span style={{ flexBasis: "20%" }}>Destination</span>
+      {/* TABLE HEADER */}
+      <div className="hidden md:flex justify-between items-center p-4 font-bold border-b bg-gray-100 rounded text-sm">
+        <span className="basis-1/4">
+          Title
+        </span>
+
+        <span className="basis-1/4">
+          Destination
+        </span>
+
+        <span className="basis-[15%]">
+          Status
+        </span>
+
+        <span className="basis-[15%]">
+          Start Date
+        </span>
+
+        <span className="basis-[15%]">
+          End Date
+        </span>
       </div>
 
-      {/* List */}
-    
-            
-      {Array.isArray(planners) &&
-  planners.map((planner) => (
-    <PlannerCard key={planner._id} {...planner}
-            className={index % 2 === 0 ? "bg-white" : "bg-gray-100"}
-          />
-        ))}
+      {/* LOADING */}
+      {loading && (
+        <p className="text-center py-10">
+          Loading planners...
+        </p>
+      )}
+
+      {/* ERROR */}
+      {error && (
+        <p className="text-center text-red-500 py-10">
+          {error}
+        </p>
+      )}
+
+      {/* EMPTY STATE */}
+      {!loading &&
+        !error &&
+        planners.length === 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center text-gray-500">
+            No planners found.
+          </div>
+        )}
+
+      {/* PLANNER LIST */}
+      {!loading &&
+        !error &&
+        planners.length > 0 && (
+          <div className="space-y-3">
+            {Array.isArray(planners) &&
+              planners.map((planner, index) => (
+                <PlannerCard
+                  key={planner._id}
+                  {...planner}
+                  className={`${
+                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                  } rounded-lg shadow-sm`}
+                />
+              ))}
+          </div>
+        )}
     </div>
   );
 }

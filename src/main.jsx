@@ -1,18 +1,15 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./App";
-import { BrowserRouter as Router } from "react-router-dom";
-import { AuthProviderWrapper } from "./context/auth.context";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
+import { BrowserRouter } from 'react-router-dom';
+import { AuthWrapper } from './context/auth.context.jsx';
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <AuthWrapper>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </AuthWrapper>
+)
 
-root.render(
-  <React.StrictMode>
-    <Router>
-      <AuthProviderWrapper>
-        <App />
-      </AuthProviderWrapper>
-    </Router>
-  </React.StrictMode>
-);

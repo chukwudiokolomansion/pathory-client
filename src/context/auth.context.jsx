@@ -1,92 +1,77 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import service from "../services/index.services";
+import { createContext, useEffect, useState } from "react";
 
+const AuthContext = createContext()
 
-// Import the string from the .env with URL of the API/server - http://localhost:5005
-const API_URL = import.meta.env.VITE_API_URL;
+function AuthWrapper(props) {
 
+    const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [loggedUserId, setLoggedUserId] = useState(null)
 
-const AuthContext = React.createContext();
+    const [loggedUserRole, setLoggedUserRole] = useState(null)
 
-function AuthProviderWrapper(props) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const [authError, setAuthError] = useState(null);
+    const [isAuthenticating, setIsAuthenticating] = useState(true)
 
-  const storeToken = (token) => {
-    localStorage.setItem("authToken", token);
-  };
+    const authenticateUser = async() => {
 
-  const authenticateUser = () => {
-    // Get the stored token from the localStorage
-    const storedToken = localStorage.getItem("authToken");
+        const authToken = localStorage.getItem("authToken")
 
-    // If the token exists in the localStorage
-    if (storedToken) {
-      // We must send the JWT token in the request's "Authorization" Headers
-      axios
-        .get(`${API_URL}/auth/verify`, {
-          headers: { Authorization: `Bearer ${storedToken}` },
-        })
-        .then((response) => {
-          // If the server verifies that JWT token is valid
-          const user = response.data;
-          // Update state variables
-          setIsLoggedIn(true);
-          setIsLoading(false);
-          setUser(user);
-        })
-        .catch((error) => {
-          if (error) {
-            setAuthError(error.response.data.message);
-            return;
-          }
-          // If the server sends an error response (invalid token)
-          // Update state variables
-          setIsLoggedIn(false);
-          setIsLoading(false);
-          setUser(null);
-        });
-    } else {
-      // If the token is not available
-      setIsLoggedIn(false);
-      setIsLoading(false);
-      setUser(null);
+        if (!authToken) {
+            setIsAuthenticating(false)
+            return // in case there is no token, don't call the backend
+        }
+
+        try {
+            
+            const response = await service.get("/auth/verify")
+            console.log(response);
+            // asume the token was valid
+            setIsLoggedIn(true)
+            setLoggedUserId(response.data.payload._id)
+            setLoggedUserRole(response.data.payload.role)
+
+            setIsAuthenticating(false)
+            
+        } catch (error) {
+            console.log(error);
+            // asume the token was not valid
+            setIsLoggedIn(false)
+            setLoggedUserId(null)
+            setLoggedUserRole(null)
+
+            setIsAuthenticating(false)
+        }
+
     }
-  };
 
-  const removeToken = () => {
-    // Upon logout, remove the token from the localStorage
-    localStorage.removeItem("authToken");
-  };
+    useEffect(() => {
+        authenticateUser()
+    }, [])
 
-  const logOutUser = () => {
-    removeToken();
-    authenticateUser();
-  };
+    if (isAuthenticating) {
+        return <h3>Authenticating user...</h3>
+    }
 
-  useEffect(() => {
-    // Run the function after the initial render,
-    // after the components in the App render for the first time.
-    authenticateUser();
-  }, []);
-
-  return (
-    <AuthContext.Provider
-      value={{
+    const passedContext = {
         isLoggedIn,
-        isLoading,
-        user,
-        storeToken,
-        authenticateUser,
-        logOutUser,
-        authError,
-      }}
-    >
-      {props.children}
-    </AuthContext.Provider>
-  );
+        setIsLoggedIn,
+        loggedUserId,
+        setLoggedUserId,
+
+        // BONUS
+        loggedUserRole,
+        setLoggedUserRole
+    }
+
+    return (
+        <AuthContext.Provider value={passedContext}>
+            {props.children}
+        </AuthContext.Provider>
+    )
+
 }
 
-export { AuthProviderWrapper, AuthContext };
+export {
+    AuthContext,
+    AuthWrapper
+}

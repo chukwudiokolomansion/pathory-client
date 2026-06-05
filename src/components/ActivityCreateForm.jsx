@@ -1,228 +1,317 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-
-// Import the string from the .env with URL of the API/server - http://localhost:5005
-const API_URL = import.meta.env.VITE_API_URL;
+import service from "../services/index.services";
 
 const DEFAULT_ACTIVITY_FORM_VALUES = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  linkedinUrl: "",
-  languages: [],
   title: "",
-  background: "",
+  aiDescription: "",
+  activityType: "",
+  coordinates: "",
+  city: "",
+  country: "",
+  address: "",
   image: "",
-  planner: "",
+  video: "",
+  tag: "",
+  weather: "",
 };
 
-function ActivityCreateForm({ plannerId, plannerName, callback, closeCallback }) {
-  const [activity, setActivity] = useState({ ...DEFAULT_STUDENT_FORM_VALUES });
+function ActivityCreateForm({
+  plannerId,
+  callback,
+  closeCallback,
+}) {
+  const [activity, setActivity] = useState(
+    DEFAULT_ACTIVITY_FORM_VALUES
+  );
+
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const requestBody = { ...activity, planner: plannerId };
-
-    setSubmitting(true);
-
-    axios
-      .post(`${API_URL}/api/activities`, requestBody)
-      .then(() => {
-        // Reset the state to clear the inputs
-        setActivity({ ...DEFAULT_ACTIVITY_FORM_VALUES, planner: plannerId });
-        setSubmitting(false);
-        callback();
-      })
-      .catch((error) => console.log(error));
-  };
-
   useEffect(() => {
-    setActivity({ ...DEFAULT_ACTIVITY_FORM_VALUES, planner: plannerId });
+    setActivity(DEFAULT_ACTIVITY_FORM_VALUES);
   }, [plannerId]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked, options, multiple } = e.target;
+    const { name, value } = e.target;
 
-    let inputValue = type === "checkbox" ? checked : value;
-
-    if (multiple && options) {
-      inputValue = [];
-      for (var i = 0, l = options.length; i < l; i++) {
-        if (options[i].selected) {
-          inputValue.push(options[i].value);
-        }
-      }
-    }
-
-    setActivity((prevActivity) => ({
-      ...prevActivity,
-      [name]: inputValue,
+    setActivity((prev) => ({
+      ...prev,
+      [name]: value,
     }));
   };
 
-  useEffect(() => {
-    setActivity({ ...DEFAULT_ACTIVITY_FORM_VALUES });
-  }, [plannerId]);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setSubmitting(true);
+
+    try {
+      const requestBody = {
+        ...activity,
+
+        coordinates: activity.coordinates
+          ? activity.coordinates
+              .split(",")
+              .map((coord) => Number(coord.trim()))
+          : [],
+
+        image: activity.image
+          ? [activity.image]
+          : [],
+
+        video: activity.video
+          ? [activity.video]
+          : [],
+
+        tag: activity.tag
+          ? activity.tag
+              .split(",")
+              .map((t) => t.trim().toLowerCase())
+          : [],
+
+        planner: plannerId,
+      };
+
+      await service.post(
+        `/activities`,
+        requestBody
+      );
+
+      setActivity(DEFAULT_ACTIVITY_FORM_VALUES);
+
+      callback();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <div className="AddActivity bg-white-100 p-8 pb-4 rounded-lg shadow-md flex flex-col h-[100vh] relative  w-full max-w-3xl mx-auto">
-      <div className="flex justify-center bg-white items-center mb-4 absolute top-0 left-0 right-0 py-2 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 border-b border-gray-300 shadow-sm"></div>
+    <div className="bg-white p-6 h-screen overflow-y-auto shadow-xl w-full max-w-xl">
+
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">
+          Create Activity
+        </h2>
+
+        <button
+          onClick={closeCallback}
+          className="text-red-500 hover:text-red-700"
+        >
+          ✕
+        </button>
+      </div>
 
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 gap-2 overflow-y-auto mt-12 px-4"
+        className="space-y-4"
       >
-        <h3 className="text-xl mt-4 mb-4 sticky left-0">Add Activity</h3>
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">First Name:</label>
+
+        {/* TITLE */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Title
+          </label>
+
           <input
             type="text"
-            name="firstName"
-            value={activity.firstName}
-            onChange={handleChange}
-            disabled={submitting}
-            className="w-full border border-gray-300 bg-gray-50 p-2 rounded shadow-sm focus:ring-2 focus:ring-blue-200 focus:z-10 transform transition-transform duration-200 focus:translate-y-[-1px]"
-          />
-        </div>
-
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">Last Name:</label>
-          <input
-            type="text"
-            name="lastName"
-            value={activity.lastName}
-            onChange={handleChange}
-            disabled={submitting}
-            className="w-full border border-gray-300 bg-gray-50 p-2 rounded shadow-sm focus:ring-2 focus:ring-blue-200 focus:z-10 transform transition-transform duration-200 focus:translate-y-[-1px]"
-          />
-        </div>
-
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">Email:</label>
-          <input
-            type="email"
-            name="email"
-            value={activity.email}
-            onChange={handleChange}
-            disabled={submitting}
-            className="w-full border border-gray-300 bg-gray-50 p-2 rounded shadow-sm focus:ring-2 focus:ring-blue-200 focus:z-10 transform transition-transform duration-200 focus:translate-y-[-1px]"
-          />
-        </div>
-
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">Phone:</label>
-          <input
-            type="tel"
-            name="phone"
-            value={activity.phone}
-            onChange={handleChange}
-            disabled={submitting}
-            className="w-full border border-gray-300 bg-gray-50 p-2 rounded shadow-sm focus:ring-2 focus:ring-blue-200 focus:z-10 transform transition-transform duration-200 focus:translate-y-[-1px]"
-          />
-        </div>
-
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">LinkedIn URL:</label>
-          <input
-            type="url"
-            name="linkedinUrl"
-            value={activity.linkedinUrl}
-            onChange={handleChange}
-            disabled={submitting}
-            className="w-full border border-gray-300 bg-gray-50 p-2 rounded shadow-sm focus:ring-2 focus:ring-blue-200 focus:z-10 transform transition-transform duration-200 focus:translate-y-[-1px]"
-          />
-        </div>
-
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">Languages:</label>
-          <select
-            name="languages"
-            value={activity.languages}
-            onChange={handleChange}
-            multiple
-            disabled={submitting}
-            className="w-full border border-gray-300 bg-gray-50 p-2 rounded shadow-sm focus:ring-2 focus:ring-blue-200 focus:z-10 transform transition-transform duration-200 focus:translate-y-[-1px]"
-          >
-            <option value="English">English</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-            <option value="German">German</option>
-            <option value="Portuguese">Portuguese</option>
-            <option value="Dutch">Dutch</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">Title:</label>
-          <select
             name="title"
             value={activity.title}
             onChange={handleChange}
             disabled={submitting}
-            className="w-full border border-gray-300 bg-gray-50 p-2 rounded shadow-sm focus:ring-2 focus:ring-blue-200 focus:z-10 transform transition-transform duration-200 focus:translate-y-[-1px]"
-          >
-            <option value="">-- Select a title --</option>
-            <option value="Trip to Paris">Trip to Paris</option>
-            <option value="Fitness Challenge">Fitness Challenge</option>
-            <option value="Graduation Preparation">Graduation Preparation</option>
-            <option value="Startup Launch">Startup Launch</option>
-            <option value="Family Reunion">Family Reunion</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">Background:</label>
-          <textarea
-            name="background"
-            value={activity.background}
-            onChange={handleChange}
-            disabled={submitting}
-            className="border p-2 rounded h-auto"
-            rows="4"
+            className="w-full border rounded p-2"
+            required
           />
         </div>
 
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">Image:</label>
+        {/* DESCRIPTION */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Description
+          </label>
+
+          <textarea
+            name="aiDescription"
+            value={activity.aiDescription}
+            onChange={handleChange}
+            disabled={submitting}
+            rows="4"
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        {/* ACTIVITY TYPE */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Activity Type
+          </label>
+
+          <select
+            name="activityType"
+            value={activity.activityType}
+            onChange={handleChange}
+            disabled={submitting}
+            className="w-full border rounded p-2"
+            required
+          >
+            <option value="">Select type</option>
+            <option value="travel">Travel</option>
+            <option value="food">Food</option>
+            <option value="fitness">Fitness</option>
+            <option value="study">Study</option>
+            <option value="social">Social</option>
+            <option value="adventure">Adventure</option>
+            <option value="work">Work</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        {/* COORDINATES */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Coordinates
+          </label>
+
+          <input
+            type="text"
+            name="coordinates"
+            placeholder="52.5200, 13.4050"
+            value={activity.coordinates}
+            onChange={handleChange}
+            disabled={submitting}
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        {/* CITY */}
+        <div>
+          <label className="block mb-1 font-medium">
+            City
+          </label>
+
+          <input
+            type="text"
+            name="city"
+            value={activity.city}
+            onChange={handleChange}
+            disabled={submitting}
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        {/* COUNTRY */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Country
+          </label>
+
+          <input
+            type="text"
+            name="country"
+            value={activity.country}
+            onChange={handleChange}
+            disabled={submitting}
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        {/* ADDRESS */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Address
+          </label>
+
+          <textarea
+            name="address"
+            value={activity.address}
+            onChange={handleChange}
+            disabled={submitting}
+            rows="3"
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        {/* IMAGE URL */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Image URL
+          </label>
+
           <input
             type="text"
             name="image"
             value={activity.image}
             onChange={handleChange}
             disabled={submitting}
-            className="w-full border border-gray-300 bg-gray-50 p-2 rounded shadow-sm focus:ring-2 focus:ring-blue-200 focus:z-10 transform transition-transform duration-200 focus:translate-y-[-1px]"
+            className="w-full border rounded p-2"
           />
         </div>
 
-        <div className="flex flex-col mb-2">
-          <label className="mb-1 font-medium">Planner:</label>
-          <select
-            name="planner"
-            value={plannerId}
+        {/* VIDEO URL */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Video URL
+          </label>
+
+          <input
+            type="text"
+            name="video"
+            value={activity.video}
             onChange={handleChange}
-            disabled
-            className="w-full border border-gray-300 bg-gray-50 p-2 rounded shadow-sm focus:ring-2 focus:ring-blue-200 focus:z-10 transform transition-transform duration-200 focus:translate-y-[-1px]"
-          >
-            <option value={plannerId}>{plannerName}</option>
-          </select>
+            disabled={submitting}
+            className="w-full border rounded p-2"
+          />
         </div>
 
-        <div className="mt-4">
+        {/* TAGS */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Tags
+          </label>
+
+          <input
+            type="text"
+            name="tag"
+            placeholder="travel, europe, summer"
+            value={activity.tag}
+            onChange={handleChange}
+            disabled={submitting}
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        {/* WEATHER */}
+        <div>
+          <label className="block mb-1 font-medium">
+            Weather
+          </label>
+
+          <input
+            type="text"
+            name="weather"
+            value={activity.weather}
+            onChange={handleChange}
+            disabled={submitting}
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        {/* BUTTONS */}
+        <div className="flex gap-3 pt-4">
           <button
             type="submit"
             disabled={submitting}
-            className="text-white w-20 px-4 py-2 rounded bg-green-500 hover:bg-green-600 transition duration-300 ease-in-out"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
           >
-            Save
+            {submitting ? "Saving..." : "Save"}
           </button>
+
           <button
+            type="button"
             onClick={closeCallback}
-            className="text-white mt-2 bg-red-500 hover:bg-red-600  w-20 px-4 py-2 rounded transition duration-300 ease-in-out"
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
           >
-            Close
+            Cancel
           </button>
         </div>
       </form>

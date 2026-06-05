@@ -1,123 +1,279 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import axios from "axios";
+import { Link, useParams } from "react-router-dom";
+import service from "../services/index.services";
+
 import placeholderImage from "./../assets/placeholder.png";
 
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function ActivityDetailsPage() {
-
-  const [activity, setActivity] = useState(null);
-  const [loading, setLoading] = useState(true);
-
   const { activityId } = useParams();
 
+  const [activity, setActivity] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [errorMessage, setErrorMessage] =
+    useState(null);
+
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/activities/${activityId}`)
-      .then((res) => {
-        setActivity(res.data);
-        setLoading(false);
-      })
-      .catch((err) => {
+    const fetchActivity = async () => {
+      try {
+        const response = await service.get(
+          `/activities/${activityId}`
+        );
+
+        setActivity(response.data);
+      } catch (err) {
         console.log(err);
+
+        setErrorMessage(
+          "Failed to load activity details"
+        );
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchActivity();
   }, [activityId]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="p-6 text-center">
+        Loading activity...
+      </div>
+    );
+  }
 
-  if (!activity) return <div>No activity found</div>;
+  if (errorMessage) {
+    return (
+      <div className="p-6 text-center text-red-500">
+        {errorMessage}
+      </div>
+    );
+  }
+
+  const activityImage =
+    activity?.image?.length > 0
+      ? activity.image[0]
+      : placeholderImage;
 
   return (
-    <div className="ActivityDetailsPage bg-gray-100 p-6">
+    <div className="bg-gray-100 min-h-screen py-10 px-4">
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-md overflow-hidden">
 
-        {/* TITLE */}
-        <h1 className="text-2xl font-bold mb-2">
-          {activity.title}
-        </h1>
+        {/* HERO IMAGE */}
+        <div className="relative h-72 bg-gray-200">
 
-        {/* AI DESCRIPTION */}
-        {activity.aiDescription && (
-          <p className="italic text-gray-600 mb-4">
-            🤖 {activity.aiDescription}
-          </p>
-        )}
+          <img
+            src={activityImage}
+            alt={activity?.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src =
+                placeholderImage;
+            }}
+          />
 
-        {/* MAIN INFO GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+          {/* OVERLAY */}
+          <div className="absolute inset-0 bg-black/40 flex items-end p-6">
 
-          <p><strong>Type:</strong> {activity.activityType}</p>
+            <div>
+              <span className="bg-blue-500 text-white text-xs px-3 py-1 rounded-full capitalize">
+                {activity?.activityType}
+              </span>
 
-          <p>
-            <strong>Location:</strong>{" "}
-            {activity.city}, {activity.country}
-          </p>
+              <h1 className="text-4xl font-bold text-white mt-3">
+                {activity?.title}
+              </h1>
 
-          <p>
-            <strong>Address:</strong>{" "}
-            {activity.address || "N/A"}
-          </p>
-
-          <p>
-            <strong>Weather:</strong>{" "}
-            {activity.weather || "N/A"}
-          </p>
-
-          <p>
-            <strong>Coordinates:</strong>{" "}
-            {activity.coordinates?.join(", ") || "N/A"}
-          </p>
-
-        </div>
-
-        {/* TAGS */}
-        {activity.tag?.length > 0 && (
-          <div className="mt-4">
-            <strong>Tags:</strong>
-            <div className="flex gap-2 mt-1 flex-wrap">
-              {activity.tag.map((t, i) => (
-                <span
-                  key={i}
-                  className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-sm"
-                >
-                  #{t}
-                </span>
-              ))}
+              {(activity?.city ||
+                activity?.country) && (
+                <p className="text-gray-200 mt-2">
+                  📍 {activity?.city}
+                  {activity?.city &&
+                  activity?.country
+                    ? ", "
+                    : ""}
+                  {activity?.country}
+                </p>
+              )}
             </div>
           </div>
-        )}
-
-        {/* MEDIA */}
-        <div className="mt-6">
-
-          {activity.image?.length > 0 && (
-            <img
-              src={activity.image[0] || placeholderImage}
-              alt="activity"
-              className="w-full h-64 object-cover rounded"
-            />
-          )}
-
-          {activity.video?.length > 0 && (
-            <video controls className="w-full mt-4 rounded">
-              <source src={activity.video[0]} />
-            </video>
-          )}
-
         </div>
 
-        {/* BACK BUTTON */}
-        <div className="mt-6">
-          <Link to="/activities">
-            <button className="bg-blue-500 text-white px-4 py-2 rounded">
-              Back to Activities
-            </button>
-          </Link>
-        </div>
+        {/* CONTENT */}
+        <div className="p-8 space-y-8">
 
+          {/* DESCRIPTION */}
+          {activity?.aiDescription && (
+            <div>
+              <h2 className="text-xl font-semibold mb-3">
+                Description
+              </h2>
+
+              <p className="text-gray-700 leading-relaxed">
+                {activity.aiDescription}
+              </p>
+            </div>
+          )}
+
+          {/* DETAILS GRID */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* LOCATION */}
+            <div className="bg-gray-50 rounded-xl p-5 border">
+
+              <h3 className="font-semibold mb-4">
+                Location
+              </h3>
+
+              <div className="space-y-2 text-sm">
+
+                <p>
+                  <strong>City:</strong>{" "}
+                  {activity?.city || "N/A"}
+                </p>
+
+                <p>
+                  <strong>Country:</strong>{" "}
+                  {activity?.country || "N/A"}
+                </p>
+
+                <p>
+                  <strong>Address:</strong>{" "}
+                  {activity?.address ||
+                    "N/A"}
+                </p>
+
+                {activity?.coordinates
+                  ?.length === 2 && (
+                  <>
+                    <p>
+                      <strong>
+                        Latitude:
+                      </strong>{" "}
+                      {
+                        activity
+                          .coordinates[0]
+                      }
+                    </p>
+
+                    <p>
+                      <strong>
+                        Longitude:
+                      </strong>{" "}
+                      {
+                        activity
+                          .coordinates[1]
+                      }
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* EXTRA INFO */}
+            <div className="bg-gray-50 rounded-xl p-5 border">
+
+              <h3 className="font-semibold mb-4">
+                Activity Info
+              </h3>
+
+              <div className="space-y-3 text-sm">
+
+                <p>
+                  <strong>
+                    Activity Type:
+                  </strong>{" "}
+                  <span className="capitalize">
+                    {
+                      activity?.activityType
+                    }
+                  </span>
+                </p>
+
+                <p>
+                  <strong>Weather:</strong>{" "}
+                  {activity?.weather ||
+                    "N/A"}
+                </p>
+
+                <p>
+                  <strong>Created:</strong>{" "}
+                  {new Date(
+                    activity?.createdAt
+                  ).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* TAGS */}
+          {activity?.tag?.length > 0 && (
+            <div>
+
+              <h2 className="text-xl font-semibold mb-4">
+                Tags
+              </h2>
+
+              <div className="flex flex-wrap gap-2">
+
+                {activity.tag.map(
+                  (singleTag, index) => (
+                    <span
+                      key={index}
+                      className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                    >
+                      #{singleTag}
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* VIDEO */}
+          {activity?.video?.length > 0 && (
+            <div>
+
+              <h2 className="text-xl font-semibold mb-4">
+                Video
+              </h2>
+
+              <a
+                href={activity.video[0]}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                Watch Video
+              </a>
+            </div>
+          )}
+
+          {/* ACTION BUTTONS */}
+          <div className="flex flex-wrap gap-4 pt-4">
+
+            <Link
+              to={`/activities/edit/${activity?._id}`}
+            >
+              <button className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg transition duration-200">
+                Edit Activity
+              </button>
+            </Link>
+
+            <Link to="/activities">
+              <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2 rounded-lg transition duration-200">
+                Back to Activities
+              </button>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
