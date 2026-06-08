@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { BiEdit } from "react-icons/bi";
+import { BiEdit, BiTrash } from "react-icons/bi";
 import { HashLoader } from "react-spinners";
 
 import PlannerFilterBar from "../components/PlannerFilterBar";
@@ -24,7 +24,7 @@ function PlannerListPage() {
         setFilteredPlanners(plannerRes.data);
 
         setWelcomeUser(
-          userRes.data.payload || userRes.data.user || userRes.data
+          userRes.data.payload || userRes.data.user || userRes.data,
         );
       } catch (error) {
         console.error(error);
@@ -48,15 +48,10 @@ function PlannerListPage() {
   const stats = useMemo(() => {
     return {
       total: allPlanners.length,
-      active: allPlanners.filter(
-        (plan) => plan.status === "Active"
-      ).length,
-      completed: allPlanners.filter(
-        (plan) => plan.status === "Completed"
-      ).length,
-      destinations: new Set(
-        allPlanners.map((plan) => plan.destination)
-      ).size,
+      active: allPlanners.filter((plan) => plan.status === "Active").length,
+      completed: allPlanners.filter((plan) => plan.status === "Completed")
+        .length,
+      destinations: new Set(allPlanners.map((plan) => plan.destination)).size,
     };
   }, [allPlanners]);
 
@@ -74,7 +69,27 @@ function PlannerListPage() {
       </div>
     );
   }
+  const handleDelete = async (plannerId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this planner?",
+    );
 
+    if (!confirmed) return;
+
+    try {
+      await service.delete(`/planners/${plannerId}`);
+
+      setAllPlanners((prev) =>
+        prev.filter((planner) => planner._id !== plannerId),
+      );
+
+      setFilteredPlanners((prev) =>
+        prev.filter((planner) => planner._id !== plannerId),
+      );
+    } catch (error) {
+      console.error("Error deleting planner:", error);
+    }
+  };
   return (
     <div className="planner-dashboard">
       {/* HERO */}
@@ -82,19 +97,14 @@ function PlannerListPage() {
         <div>
           <h1>
             {greeting}
-            {welcomeUser?.username &&
-              `, ${welcomeUser.username}`}
+            {welcomeUser?.username && `, ${welcomeUser.username}`}
           </h1>
 
-          <p>
-            Manage your journeys, memories, and destinations.
-          </p>
+          <p>Manage your journeys, memories, and destinations.</p>
         </div>
 
         <Link to="/planner/create">
-          <button className="create-btn">
-            + Create Plan
-          </button>
+          <button className="create-btn">+ Create Plan</button>
         </Link>
       </div>
 
@@ -132,9 +142,7 @@ function PlannerListPage() {
       {/* EMPTY STATE */}
       {filteredPlanners.length === 0 ? (
         <div className="text-center py-10">
-          <h3 className="text-xl font-semibold">
-            No planners found
-          </h3>
+          <h3 className="text-xl font-semibold">No planners found</h3>
           <p className="text-gray-500 mt-2">
             Create your first planner to get started.
           </p>
@@ -142,16 +150,11 @@ function PlannerListPage() {
       ) : (
         <div className="planner-grid">
           {filteredPlanners.map((plan) => (
-            <div
-              key={plan._id}
-              className="planner-card"
-            >
+            <div key={plan._id} className="planner-card">
               <div className="planner-card-header">
                 <h3>{plan.title}</h3>
 
-                <span className="status-pill">
-                  {plan.status}
-                </span>
+                <span className="status-pill">{plan.status}</span>
               </div>
 
               <div className="planner-content">
@@ -160,23 +163,25 @@ function PlannerListPage() {
                 <p>🏁 {formatDate(plan.endDate)}</p>
               </div>
 
-              <div className="planner-actions">
-                <Link
-                  to={`/planner/details/${plan._id}`}
-                >
-                  <button className="view-btn">
-                    View
-                  </button>
+              <div className="planner-actions flex gap-2">
+                <Link to={`/planners/details/${plan._id}`}>
+                  <button className="view-btn">View</button>
                 </Link>
 
-                <Link
-                  to={`/dashboard/planner/${plan._id}`}
-                >
-                  <button className="edit-btn">
+                <Link to={`/dashboard/planners/${plan._id}`}>
+                  <button className="edit-btn flex items-center gap-1">
                     <BiEdit />
                     Edit
                   </button>
                 </Link>
+
+                <button
+                  onClick={() => handleDelete(plan._id)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center gap-1"
+                >
+                  <BiTrash />
+                  Delete
+                </button>
               </div>
             </div>
           ))}
