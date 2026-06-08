@@ -13,7 +13,7 @@ import PlannerCreatePage from "./pages/PlannerCreatePage";
 import ActivityListPage from "./pages/ActivityListPage";
 import ActivityDetailsPage from "./pages/ActivityDetailsPage";
 import ActivityEditPage from "./pages/ActivityEditPage";
-
+import ActivityCreateForm from "./components/ActivityCreateForm";
 import UserProfilePage from "./pages/UserProfilePage";
 import HomePage from "./pages/HomePage";
 
@@ -44,29 +44,18 @@ function App() {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
-
-          <Route path="/dashboard" element={<HomePage />} />
-
-          <Route path="/planners" element={<PlannerListPage />} />
-
+          <Route path="/planners" element={ <IsPrivate> <PlannerListPage /> </IsPrivate> } />
           <Route path="/planners/details/:plannerId" element={<PlannerDetailsPage />} />
-
           <Route path="/planners/edit/:plannerId" element={<PlannerEditPage />} />
-
           <Route path="/planners/create" element={<PlannerCreatePage />} />
-
-          <Route path="/activities" element={<ActivityListPage />} />
-
+          <Route path="/activities" element={ <IsPrivate> <ActivityListPage /> </IsPrivate> } />
+          <Route path="/activities/create" element={<ActivityCreateForm />} />
+          <Route path="/sidebar" element={<Sidebar />} />
           <Route path="/activities/details/:activityId" element={<ActivityDetailsPage />} />
-
           <Route path="/activities/edit/:activityId" element={<ActivityEditPage />} />
-
           <Route path="/users/profile" element={ <IsPrivate> <UserProfilePage /> </IsPrivate> } />
-
           <Route path="/login" element={ <IsAnon> <Login /> </IsAnon> } />
-
-          <Route path="/signup" element={ <IsAnon> <Signup /> </IsAnon> } />
-
+          <Route path="/signup" element={ <IsAnon> <Signup /> </IsAnon> } />                  
         </Routes>
       </div>
     </div>

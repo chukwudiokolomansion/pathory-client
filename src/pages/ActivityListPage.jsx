@@ -49,16 +49,16 @@ function ActivityListPage() {
         <div>
           <h1>Discover Activities</h1>
 
+          <Link to="/activities/create">
+            <button className="dashboard-create-btn">+ Create Activity</button>
+          </Link>
+
           <p>
             Explore experiences, destinations and moments to add to your
             journey.
           </p>
         </div>
       </div>
-
-      <Link to="/activities/create">
-        <button className="create-btn">+ Create activity</button>
-      </Link>
 
       {/* STATS */}
       <div className="activity-stats">
@@ -81,42 +81,39 @@ function ActivityListPage() {
       </div>
 
       {/* ACTIVITIES GRID */}
-     
-            <div className="activity-grid">
-              {activities.map((activity) => (
-                <div
-                  key={activity._id}
-                  className="bg-white rounded-lg shadow p-4"
-                >
-                  <ActivityCard {...activity} />
 
-                  <div className="flex gap-2 mt-4">
-                    <Link to={`/activities/details/${activity._id}`}>
-                      <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                        View
-                      </button>
-                    </Link>
+      <div className="activity-grid">
+        {activities.map((activity) => (
+          <div key={activity._id} className="bg-white rounded-lg shadow p-4">
+            <ActivityCard {...activity} />
 
-                    <Link to={`/activities/edit/${activity._id}`}>
-                      <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded flex items-center gap-1">
-                        <BiEdit />
-                        Edit
-                      </button>
-                    </Link>
+            <div className="flex gap-2 mt-4">
+              <Link to="/activities/details/:activityId">
+                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                  View
+                </button>
+              </Link>
 
-                    <button
-                      onClick={() => handleDelete(activity._id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center gap-1"
-                    >
-                      <BiTrash />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+              <Link to="/activities/edit/:activityId">
+                <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded flex items-center gap-1">
+                  <BiEdit />
+                  Edit
+                </button>
+              </Link>
+
+              <button
+                onClick={() => handleDelete(activity._id)}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center gap-1"
+              >
+                <BiTrash />
+                Delete
+              </button>
             </div>
           </div>
-        )}
- 
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default ActivityListPage;

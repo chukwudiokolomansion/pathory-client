@@ -1,83 +1,110 @@
 import { useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+
 import { AuthContext } from "../context/auth.context";
-import TopNavbar from "../pages/TopNavbar";
+
+import {
+  HiOutlineMenu,
+  HiOutlineLogout,
+  HiOutlineHome,
+} from "react-icons/hi";
 
 function Navbar({ toggleSidebar }) {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const navigate = useNavigate()
-
-  const { setIsLoggedIn, setLoggedUserId, isLoggedIn, setLoggedUserRole } = useContext(AuthContext)
+  const {
+    setIsLoggedIn,
+    setLoggedUserId,
+    isLoggedIn,
+    setLoggedUserRole,
+  } = useContext(AuthContext);
 
   const getCurrentLinkText = (pathname) => {
     const routes = {
-      "/dashboard": "Planners",
-      //"/planners": "Planners",
+      "/dashboard": "Planner Dashboard",
       "/activities": "Activities",
-      "/planners/details/:plannerId": "Planner Details",
-      "/planners/edit/:plannerId": "Edit Planner",
-      "/planners/create": "Create Planner",
-      "/activities/details/:activityId": "Activity Details",
-      "/activities/edit/:activityId": "Edit Activity",
-      "/users": "User Profile",
-      "/login": "Log In",
-      "/signup": "Sign Up",
+      "/users/profile": "Profile",
+      "/login": "Login",
+      "/signup": "Signup",
     };
 
-    for (let route in routes) {
-      let regexPattern = new RegExp("^" + route.replace(/:\w+/g, "\\w+") + "$");
-      if (regexPattern.test(pathname)) {
-        return routes[route];
-      }
-    }
-  }
+    return routes[pathname] || "Pathory";
+  };
 
   function handleLogout(e) {
-    e.preventDefault()
+    e.preventDefault();
 
-    // destroying the token
-    localStorage.removeItem("authToken")
+    localStorage.removeItem("authToken");
 
-    // revert the states to their initial value
-    setIsLoggedIn(false)
-    setLoggedUserId(null)
-    setLoggedUserRole(null)
+    setIsLoggedIn(false);
+    setLoggedUserId(null);
+    setLoggedUserRole(null);
 
-    // navigate the user to a public page
-    navigate("/login")
-
+    navigate("/login");
   }
 
   return (
-     <nav className="bg-blue-600 text-white shadow-md fixed top-0 left-0 w-full z-50">
-      <div className="flex justify-between h-20 items-center px-4">
-        {/* Left flex container for burger icon and text */}
-        <div className="flex items-center space-x-2 w-1/4">
-          <button
-            className="flex items-center text-l py-1"
-            onClick={toggleSidebar}
-          >
-            ☰
-          </button>
-          <span className="text-xl">
-            {getCurrentLinkText(location.pathname)}
-          </span>
-          </div>
+    <nav className="pathory-navbar">
+      <div className="navbar-left">
+        <button
+          className="menu-btn"
+          onClick={toggleSidebar}
+        >
+          <HiOutlineMenu size={24} />
+        </button>
 
+        <div>
+          <h2>
+            {getCurrentLinkText(
+              location.pathname
+            )}
+          </h2>
 
-      <Link to="/">Home</Link>
-
-      {!isLoggedIn && <>
-        <Link to="/signup">Signup</Link>
-        <Link to="/login">Login</Link>
-      </>}
-
-      {isLoggedIn && <>
-        <Link to="/dashboard">Dashboard</Link>
-        <Link onClick={handleLogout}>Logout</Link>
-      </>}
+          <p>Every Life Has A Story</p>
         </div>
+      </div>
 
+      <div className="navbar-right">
+        <Link
+          to="/"
+          className="nav-icon-btn"
+        >
+          <HiOutlineHome size={20} />
+        </Link>
+
+        {!isLoggedIn && (
+          <>
+            <Link
+              to="/signup"
+              className="nav-btn"
+            >
+              Signup
+            </Link>
+
+            <Link
+              to="/login"
+              className="nav-btn-primary"
+            >
+              Login
+            </Link>
+          </>
+        )}
+
+        {isLoggedIn && (
+          <button
+            onClick={handleLogout}
+            className="logout-btn"
+          >
+            <HiOutlineLogout />
+            Logout
+          </button>
+        )}
+      </div>
     </nav>
   );
 }

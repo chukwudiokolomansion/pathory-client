@@ -103,8 +103,8 @@ function PlannerListPage() {
           <p>Manage your journeys, memories, and destinations.</p>
         </div>
 
-        <Link to="/planner/create">
-          <button className="create-btn">+ Create Plan</button>
+        <Link to="/planners/create">
+          <button className="dashboard-create-btn">+ Create Plan</button>
         </Link>
       </div>
 
@@ -164,11 +164,11 @@ function PlannerListPage() {
               </div>
 
               <div className="planner-actions flex gap-2">
-                <Link to={`/planners/details/${plan._id}`}>
+                <Link to="/planners/details/:plannerId">
                   <button className="view-btn">View</button>
                 </Link>
 
-                <Link to={`/dashboard/planners/${plan._id}`}>
+                <Link to="/planners/edit/:plannerId">
                   <button className="edit-btn flex items-center gap-1">
                     <BiEdit />
                     Edit
