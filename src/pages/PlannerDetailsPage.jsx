@@ -17,7 +17,23 @@ function PlannerDetailsPage() {
   const { plannerId } = useParams();
 
   // GET PLANNER
-  const getPlanner = useCallback(() => {
+
+useEffect(() => {
+  const getPlanner = async () => {
+    try {
+      const response = await service.get(
+        `/planners/${plannerId}`
+      );
+
+      setPlanner(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  getPlanner();
+}, [plannerId]);
+  /*const getPlanner = useCallback(() => {
     service
       .get(`/planners/${plannerId}`)
       .then((response) => {
@@ -40,7 +56,7 @@ function PlannerDetailsPage() {
     getPlanner();
     getActivities();
     setLoading(false);
-  }, [getPlanner, getActivities]);
+  }, [getPlanner, getActivities]);*/
 
   return (
     <div className="PlannerDetails bg-gray-100 py-6 px-4">

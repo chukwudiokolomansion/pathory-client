@@ -50,14 +50,20 @@ function PlannerEditPage() {
   };
 
   // UPDATE PLANNER
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    service
-      .put(`/planners/${plannerId}`, planner)
-      .then(() => navigate(`/planners/details/${plannerId}`))
-      .catch((err) => console.log(err));
-  };
+  try {
+    await service.patch(
+      `/planners/${plannerId}`,
+      planner
+    );
+
+    navigate(`/planners/details/${plannerId}`);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   // DELETE PLANNER
   const handleDelete = () => {

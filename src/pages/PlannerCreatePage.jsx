@@ -29,22 +29,20 @@ function PlannerCreatePage() {
   }));
 };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-      const requestBody = {
-      ...planner,
-    };
+  try {
+    const response = await service.post(
+      "/planners",
+      planner
+    );
 
-
-    service
-      .post(`/planners`, requestBody)
-      .then((res) => {
-        const newPlanner = res.data;
-        navigate(`/planners/details/${newPlanner._id}`);
-      })
-      .catch((err) => console.log(err));
-  };
+    navigate(`/planners/details/${response.data._id}`);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   return (
     <div className="PlannerCreatePage p-8 pb-16 mb-10 mt-10 rounded-lg shadow-md flex flex-col h-full relative w-full max-w-3xl mx-auto">
