@@ -1,242 +1,86 @@
 import { useState, useEffect } from "react";
+import { HashLoader } from "react-spinners";
+
 import service from "../services/index.services";
-
-
-
 import ActivityCard from "../components/ActivityCard";
 
-
-
-const DEFAULT_CENTER = [51.505, -0.09];
-
 function ActivityListPage() {
-  const [activities, setActivities] = useState([]);
+  const [activities, setActivities] = useState(null);
 
-  const [titleQuery, setTitleQuery] =
-    useState("");
-
-  const [categoryQuery, setCategoryQuery] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState(null);
-
-  // Handle filter changes
-  const handleChange = (event, updateState) => {
-    updateState(event.target.value);
-  };
-
-  // Fetch activities
   useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        setLoading(true);
-
-        // Build query params safely
-        const params = new URLSearchParams();
-
-        if (titleQuery) {
-          params.append("title", titleQuery);
-        }
-
-        if (categoryQuery) {
-          params.append(
-            "category",
-            categoryQuery
-          );
-        }
-
-        const response = await service.get(
-          `/activities?${params.toString()}`
-        );
-
+    service
+      .get("/activities")
+      .then((response) => {
         setActivities(response.data);
+      })
+      .catch((error) => console.log(error));
+  }, []);
 
-        setError(null);
-      } catch (err) {
-        console.log(err);
-
-        setError("Failed to load activities.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchActivities();
-  }, [titleQuery, categoryQuery]);
+  if (!activities) {
+    return (
+      <div className="loader-container">
+        <HashLoader color="#8b5cf6" size={80} />
+      </div>
+    );
+  }
 
   return (
-    <div className="ActivityListPage space-y-6">
+    <div className="activity-dashboard">
+      {/* HERO */}
+      <div className="activity-hero">
+        <div>
+          <h1>Discover Activities</h1>
 
-      {/* FILTER BAR */}
-      <div className="flex flex-wrap gap-4 p-4 bg-gray-100 rounded-lg shadow-sm">
-
-        {/* Search by title */}
-        <input
-          type="text"
-          placeholder="Search by title..."
-          value={titleQuery}
-          onChange={(e) =>
-            handleChange(e, setTitleQuery)
-          }
-          className="border rounded p-2 flex-1"
-        />
-
-        {/* Filter by category */}
-        <select
-          value={categoryQuery}
-          onChange={(e) =>
-            handleChange(e, setCategoryQuery)
-          }
-          className="border rounded p-2"
-        >
-          <option value="">
-            All Categories
-          </option>
-
-          <option value="Outdoor">
-            Outdoor
-          </option>
-
-          <option value="Fitness">
-            Fitness
-          </option>
-
-          <option value="Education">
-            Education
-          </option>
-
-          <option value="Entertainment">
-            Entertainment
-          </option>
-        </select>
+          <p>
+            Explore experiences, destinations and moments
+            to add to your journey.
+          </p>
+        </div>
       </div>
 
-      {/* MAP */}
-      <div className="rounded-lg overflow-hidden shadow-md">
-        <MapContainer
-          center={DEFAULT_CENTER}
-          zoom={13}
-          scrollWheelZoom={false}
-          className="h-[400px] w-full"
-        >
-          <TileLayer
-            attribution="&copy; OpenStreetMap contributors"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+      {/* STATS */}
+      <div className="activity-stats">
+        <div className="activity-stat-card">
+          <h3>{activities.length}</h3>
+          <p>Total Activities</p>
+        </div>
 
-          {activities.map((activity) => {
-            const coordinates =
-              activity?.coordinates;
-
-            // Skip invalid coordinates
-            if (
-              !coordinates ||
-              coordinates.length !== 2
-            ) {
-              return null;
+        <div className="activity-stat-card">
+          <h3>
+            {
+              new Set(
+                activities.map(
+                  (activity) => activity.country
+                )
+              ).size
             }
+          </h3>
+          <p>Countries</p>
+        </div>
 
-            return (
-              <Marker
-                key={activity._id}
-                position={coordinates}
-              >
-                <Popup>
-                  <div className="space-y-2">
-
-                    {/* Cloudinary Image */}
-                    {activity.imageUrl && (
-                      <img
-                        src={activity.imageUrl}
-                        alt={activity.title}
-                        className="w-full h-24 object-cover rounded"
-                      />
-                    )}
-
-                    <p>
-                      <strong>
-                        {activity.title}
-                      </strong>
-                    </p>
-
-                    <p>
-                      Category:{" "}
-                      {activity.category}
-                    </p>
-
-                    <p>
-                      Duration:{" "}
-                      {activity.duration} hrs
-                    </p>
-
-                    <p>
-                      Price: $
-                      {activity.price}
-                    </p>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
-        </MapContainer>
+        <div className="activity-stat-card">
+          <h3>
+            {
+              new Set(
+                activities.map(
+                  (activity) => activity.city
+                )
+              ).size
+            }
+          </h3>
+          <p>Cities</p>
+        </div>
       </div>
 
-      {/* TABLE HEADER */}
-      <div className="flex justify-between items-center p-3 font-bold border-b bg-gray-100 rounded">
-
-        <span className="basis-1/4">
-          Image
-        </span>
-
-        <span className="basis-1/4">
-          Title
-        </span>
-
-        <span className="basis-[15%]">
-          Category
-        </span>
-
-        <span className="basis-[15%]">
-          Duration
-        </span>
-
-        <span className="basis-[15%]">
-          Price
-        </span>
-      </div>
-
-      {/* LOADING */}
-      {loading && (
-        <p className="text-center">
-          Loading activities...
-        </p>
-      )}
-
-      {/* ERROR */}
-      {error && (
-        <p className="text-center text-red-500">
-          {error}
-        </p>
-      )}
-
-      {/* ACTIVITY LIST */}
-      {!loading &&
-        !error &&
-        activities.map((activity, index) => (
+      {/* ACTIVITIES GRID */}
+      <div className="activity-grid">
+        {activities.map((activity) => (
           <ActivityCard
             key={activity._id}
             {...activity}
-            className={
-              index % 2 === 0
-                ? "bg-white"
-                : "bg-gray-100"
-            }
           />
         ))}
+      </div>
     </div>
   );
 }

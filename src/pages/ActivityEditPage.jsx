@@ -2,57 +2,48 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import service from "../services/index.services";
 
+
 const DEFAULT_ACTIVITY_FORM_VALUES = {
   title: "",
   aiDescription: "",
   activityType: "",
-  coordinates: [],
+  coordinates: ["", ""], // [lat, lng]
   city: "",
   country: "",
   address: "",
-  image: [],
-  video: [],
-  tag: [],
+  image: "",
+  video: "",
+  tag: "",
   weather: "",
 };
 
 function ActivityEditPage() {
-  const { activityId } = useParams();
+  const [activity, setActivity] = useState(DEFAULT_ACTIVITY_FORM_VALUES);
+  const [loading, setLoading] = useState(true);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
+  const { activityId } = useParams();
   const navigate = useNavigate();
 
-  const [activity, setActivity] = useState(
-    DEFAULT_ACTIVITY_FORM_VALUES
-  );
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [
-    showDeleteConfirmation,
-    setShowDeleteConfirmation,
-  ] = useState(false);
-
-  // FETCH ACTIVITY
   useEffect(() => {
-    const getActivity = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/api/activities/${activityId}`
-        );
+    service
+      .get(`${API_URL}/api/activities/${activityId}`)
+      .then((res) => {
+        const data = res.data;
 
-        setActivity(response.data);
-      } catch (error) {
-        console.log(error);
-      } finally {
+        setActivity({
+          ...data,
+          image: (data.image || []).join(", "),
+          video: (data.video || []).join(", "),
+          tag: (data.tag || []).join(", "),
+          coordinates: data.coordinates || ["", ""],
+        });
+
         setLoading(false);
-      }
-    };
-
-    getActivity();
+      })
+      .catch((err) => console.log(err));
   }, [activityId]);
 
-  // HANDLE INPUT CHANGE
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -62,365 +53,184 @@ function ActivityEditPage() {
     }));
   };
 
-  // HANDLE SUBMIT
-  const handleSubmit = async (e) => {
+  const handleCoordinateChange = (index, value) => {
+    const updated = [...activity.coordinates];
+    updated[index] = value;
+
+    setActivity((prev) => ({
+      ...prev,
+      coordinates: updated,
+    }));
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    try {
-      const requestBody = {
-        ...activity,
+    const requestBody = {
+      ...activity,
+      image: activity.image ? activity.image.split(",").map((i) => i.trim()) : [],
+      video: activity.video ? activity.video.split(",").map((v) => v.trim()) : [],
+      tag: activity.tag ? activity.tag.split(",").map((t) => t.trim().toLowerCase()) : [],
+      coordinates:
+        activity.coordinates[0] && activity.coordinates[1]
+          ? [Number(activity.coordinates[0]), Number(activity.coordinates[1])]
+          : undefined,
+    };
 
-        image:
-          typeof activity.image === "string"
-            ? [activity.image]
-            : activity.image,
-
-        video:
-          typeof activity.video === "string"
-            ? [activity.video]
-            : activity.video,
-
-        tag:
-          typeof activity.tag === "string"
-            ? activity.tag
-                .split(",")
-                .map((t) =>
-                  t.trim().toLowerCase()
-                )
-            : activity.tag,
-      };
-
-      await service.put(
-        `/activities/${activity._id}`,
-        requestBody
-      );
-
-      navigate(
-        `/activities/details/${activity._id}`
-      );
-    } catch (error) {
-      console.log(error);
-    }
+    service
+      .put(`/activities/${activityId}`, requestBody)
+      .then(() => navigate(`/activities/${activityId}`))
+      .catch((err) => console.log(err));
   };
 
-  // HANDLE DELETE
-  const handleDelete = async () => {
-    try {
-      await service.delete(
-        `/activities/${activity._id}`
-      );
-
-      navigate("/activities");
-    } catch (error) {
-      console.log(error);
-    }
+  const handleDelete = () => {
+    service
+      .delete(`${API_URL}/api/activities/${activityId}`)
+      .then(() => navigate(`/activities`))
+      .catch((err) => console.log(err));
   };
 
-  if (loading) {
-    return (
-      <div className="p-6 text-center">
-        Loading...
-      </div>
-    );
-  }
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="bg-gray-100 min-h-screen py-10 px-4">
+    <div className="p-8 max-w-3xl mx-auto bg-white shadow-md rounded-lg">
 
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-md p-8">
+      <h2 className="text-2xl font-bold mb-6">Edit Activity</h2>
 
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">
-          Edit Activity
-        </h1>
-
-        {/* DELETE MODAL */}
-        {showDeleteConfirmation && (
-          <div className="fixed inset-0 flex items-center justify-center z-50">
-
-            <div className="absolute inset-0 bg-black/50"></div>
-
-            <div className="bg-white rounded-xl p-6 w-96 z-10 shadow-xl">
-
-              <h2 className="text-xl font-semibold mb-4">
-                Delete Activity?
-              </h2>
-
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to
-                permanently delete this
-                activity?
-              </p>
-
-              <div className="flex justify-end gap-3">
-
-                <button
-                  onClick={() =>
-                    setShowDeleteConfirmation(
-                      false
-                    )
-                  }
-                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+      {showDeleteConfirmation && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded shadow">
+            <p className="mb-4">Delete this activity?</p>
+            <button onClick={handleDelete} className="bg-red-500 text-white px-4 py-2 mr-2">
+              Yes
+            </button>
+            <button onClick={() => setShowDeleteConfirmation(false)} className="bg-gray-300 px-4 py-2">
+              No
+            </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* FORM */}
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
+      <form onSubmit={handleSubmit} className="grid gap-4">
+
+        <input
+          name="title"
+          value={activity.title}
+          onChange={handleChange}
+          placeholder="Title"
+          className="border p-2"
+        />
+
+        <textarea
+          name="aiDescription"
+          value={activity.aiDescription}
+          onChange={handleChange}
+          placeholder="AI Description"
+          className="border p-2"
+        />
+
+        <select
+          name="activityType"
+          value={activity.activityType}
+          onChange={handleChange}
+          className="border p-2"
         >
+          <option value="">Select type</option>
+          <option value="travel">Travel</option>
+          <option value="food">Food</option>
+          <option value="fitness">Fitness</option>
+          <option value="study">Study</option>
+          <option value="social">Social</option>
+          <option value="adventure">Adventure</option>
+          <option value="work">Work</option>
+          <option value="other">Other</option>
+        </select>
 
-          {/* TITLE */}
-          <div>
-            <label className="block mb-2 font-medium">
-              Title
-            </label>
+        <div className="flex gap-2">
+          <input
+            placeholder="Latitude"
+            value={activity.coordinates?.[0] || ""}
+            onChange={(e) => handleCoordinateChange(0, e.target.value)}
+            className="border p-2 w-full"
+          />
+          <input
+            placeholder="Longitude"
+            value={activity.coordinates?.[1] || ""}
+            onChange={(e) => handleCoordinateChange(1, e.target.value)}
+            className="border p-2 w-full"
+          />
+        </div>
 
-            <input
-              type="text"
-              name="title"
-              value={activity.title}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3"
-              required
-            />
-          </div>
+        <input
+          name="city"
+          value={activity.city}
+          onChange={handleChange}
+          placeholder="City"
+          className="border p-2"
+        />
 
-          {/* DESCRIPTION */}
-          <div>
-            <label className="block mb-2 font-medium">
-              Description
-            </label>
+        <input
+          name="country"
+          value={activity.country}
+          onChange={handleChange}
+          placeholder="Country"
+          className="border p-2"
+        />
 
-            <textarea
-              name="aiDescription"
-              value={
-                activity.aiDescription
-              }
-              onChange={handleChange}
-              rows={4}
-              className="w-full border rounded-lg p-3"
-            />
-          </div>
+        <input
+          name="address"
+          value={activity.address}
+          onChange={handleChange}
+          placeholder="Address"
+          className="border p-2"
+        />
 
-          {/* ACTIVITY TYPE */}
-          <div>
-            <label className="block mb-2 font-medium">
-              Activity Type
-            </label>
+        <input
+          name="image"
+          value={activity.image}
+          onChange={handleChange}
+          placeholder="Images (comma separated URLs)"
+          className="border p-2"
+        />
 
-            <select
-              name="activityType"
-              value={
-                activity.activityType
-              }
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3"
-              required
-            >
-              <option value="">
-                Select type
-              </option>
+        <input
+          name="video"
+          value={activity.video}
+          onChange={handleChange}
+          placeholder="Videos (comma separated URLs)"
+          className="border p-2"
+        />
 
-              <option value="travel">
-                Travel
-              </option>
+        <input
+          name="tag"
+          value={activity.tag}
+          onChange={handleChange}
+          placeholder="Tags (comma separated)"
+          className="border p-2"
+        />
 
-              <option value="food">
-                Food
-              </option>
+        <input
+          name="weather"
+          value={activity.weather}
+          onChange={handleChange}
+          placeholder="Weather"
+          className="border p-2"
+        />
 
-              <option value="fitness">
-                Fitness
-              </option>
+        <div className="flex gap-3 mt-4">
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2">
+            Save
+          </button>
 
-              <option value="study">
-                Study
-              </option>
-
-              <option value="social">
-                Social
-              </option>
-
-              <option value="adventure">
-                Adventure
-              </option>
-
-              <option value="work">
-                Work
-              </option>
-
-              <option value="other">
-                Other
-              </option>
-            </select>
-          </div>
-
-          {/* CITY + COUNTRY */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            <div>
-              <label className="block mb-2 font-medium">
-                City
-              </label>
-
-              <input
-                type="text"
-                name="city"
-                value={activity.city || ""}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-              />
-            </div>
-
-            <div>
-              <label className="block mb-2 font-medium">
-                Country
-              </label>
-
-              <input
-                type="text"
-                name="country"
-                value={
-                  activity.country || ""
-                }
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-              />
-            </div>
-          </div>
-
-          {/* ADDRESS */}
-          <div>
-            <label className="block mb-2 font-medium">
-              Address
-            </label>
-
-            <textarea
-              name="address"
-              value={
-                activity.address || ""
-              }
-              onChange={handleChange}
-              rows={3}
-              className="w-full border rounded-lg p-3"
-            />
-          </div>
-
-          {/* WEATHER */}
-          <div>
-            <label className="block mb-2 font-medium">
-              Weather
-            </label>
-
-            <input
-              type="text"
-              name="weather"
-              value={
-                activity.weather || ""
-              }
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3"
-            />
-          </div>
-
-          {/* TAGS */}
-          <div>
-            <label className="block mb-2 font-medium">
-              Tags
-            </label>
-
-            <input
-              type="text"
-              name="tag"
-              value={
-                Array.isArray(activity.tag)
-                  ? activity.tag.join(", ")
-                  : activity.tag || ""
-              }
-              onChange={handleChange}
-              placeholder="travel, hiking, food"
-              className="w-full border rounded-lg p-3"
-            />
-          </div>
-
-          {/* IMAGE */}
-          <div>
-            <label className="block mb-2 font-medium">
-              Image URL
-            </label>
-
-            <input
-              type="text"
-              name="image"
-              value={
-                Array.isArray(
-                  activity.image
-                )
-                  ? activity.image[0]
-                  : activity.image || ""
-              }
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3"
-            />
-          </div>
-
-          {/* VIDEO */}
-          <div>
-            <label className="block mb-2 font-medium">
-              Video URL
-            </label>
-
-            <input
-              type="text"
-              name="video"
-              value={
-                Array.isArray(
-                  activity.video
-                )
-                  ? activity.video[0]
-                  : activity.video || ""
-              }
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3"
-            />
-          </div>
-
-          {/* ACTION BUTTONS */}
-          <div className="flex flex-wrap gap-4 pt-4">
-
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
-            >
-              Save Changes
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowDeleteConfirmation(
-                  true
-                )
-              }
-              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
-            >
-              Delete Activity
-            </button>
-          </div>
-        </form>
-      </div>
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirmation(true)}
+            className="bg-red-500 text-white px-4 py-2"
+          >
+            Delete
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

@@ -1,219 +1,187 @@
-import { useState, useEffect } from "react";
-import service from "../services/index.services";
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { BiEdit } from "react-icons/bi";
+import { HashLoader } from "react-spinners";
 
 import PlannerFilterBar from "../components/PlannerFilterBar";
-import PlannerCard from "../components/PlannerCard";
-
+import service from "../services/index.services";
 
 function PlannerListPage() {
-  const [planners, setPlanners] =
-    useState([]);
+  const [allPlanners, setAllPlanners] = useState([]);
+  const [filteredPlanners, setFilteredPlanners] = useState([]);
+  const [welcomeUser, setWelcomeUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [destinationQuery, setDestinationQuery] =
-    useState("");
-
-  const [titleQuery, setTitleQuery] =
-    useState("");
-
-  const [statusQuery, setStatusQuery] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState(null);
-
-  // Handle filter changes
-  const handleChange = (
-    event,
-    updateState
-  ) => {
-    updateState(event.target.value);
-  };
-
-  // Fetch planners
   useEffect(() => {
-    const fetchPlanners = async () => {
+    const fetchData = async () => {
       try {
-        setLoading(true);
+        const [plannerRes, userRes] = await Promise.all([
+          service.get("/planners"),
+          service.get("/auth/verify"),
+        ]);
 
-        // Build query params
-        const params =
-          new URLSearchParams();
+        setAllPlanners(plannerRes.data);
+        setFilteredPlanners(plannerRes.data);
 
-        if (destinationQuery) {
-          params.append(
-            "destination",
-            destinationQuery
-          );
-        }
-
-        if (titleQuery) {
-          params.append(
-            "title",
-            titleQuery
-          );
-        }
-
-        if (statusQuery) {
-          params.append(
-            "status",
-            statusQuery
-          );
-        }
-
-        const response =
-          await service.get(
-            `/planners?${params.toString()}`,
-            {
-              withCredentials: true,
-            }
-          );
-
-        setPlanners(response.data);
-
-        setError(null);
-      } catch (err) {
-        console.log(err);
-
-        setError(
-          "Failed to load planners."
+        setWelcomeUser(
+          userRes.data.payload || userRes.data.user || userRes.data
         );
+      } catch (error) {
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPlanners();
-  }, [
-    destinationQuery,
-    titleQuery,
-    statusQuery,
-  ]);
+    fetchData();
+  }, []);
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+
+    return "Good evening";
+  }, []);
+
+  const stats = useMemo(() => {
+    return {
+      total: allPlanners.length,
+      active: allPlanners.filter(
+        (plan) => plan.status === "Active"
+      ).length,
+      completed: allPlanners.filter(
+        (plan) => plan.status === "Completed"
+      ).length,
+      destinations: new Set(
+        allPlanners.map((plan) => plan.destination)
+      ).size,
+    };
+  }, [allPlanners]);
+
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+
+    return new Date(date).toLocaleDateString();
+  };
+
+  if (loading) {
+    return (
+      <div className="loader-container">
+        <HashLoader color="#ff6b35" size={90} />
+        <p className="loading-text">Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="PlannerListPage space-y-6 p-4">
-      {/* FILTER BAR */}
-      <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col md:flex-row gap-4">
-        {/* Existing Filter Bar */}
-        <PlannerFilterBar
-          destinationQuery={
-            destinationQuery
-          }
-          setDestinationQuery={
-            setDestinationQuery
-          }
-          titleQuery={titleQuery}
-          setTitleQuery={
-            setTitleQuery
-          }
-          handleChange={
-            handleChange
-          }
-        />
+    <div className="planner-dashboard">
+      {/* HERO */}
+      <div className="dashboard-hero">
+        <div>
+          <h1>
+            {greeting}
+            {welcomeUser?.username &&
+              `, ${welcomeUser.username}`}
+          </h1>
 
-        {/* STATUS FILTER */}
-        <div className="flex flex-col gap-1 min-w-[180px]">
-          <label className="text-sm font-semibold text-gray-700">
-            Status
-          </label>
+          <p>
+            Manage your journeys, memories, and destinations.
+          </p>
+        </div>
 
-          <select
-            value={statusQuery}
-            onChange={(e) =>
-              setStatusQuery(
-                e.target.value
-              )
-            }
-            className="border rounded p-2"
-          >
-            <option value="">
-              All Statuses
-            </option>
+        <Link to="/planner/create">
+          <button className="create-btn">
+            + Create Plan
+          </button>
+        </Link>
+      </div>
 
-            <option value="pending">
-              Pending
-            </option>
+      {/* STATS */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>{stats.total}</h3>
+          <p>Total Plans</p>
+        </div>
 
-            <option value="in-progress">
-              In Progress
-            </option>
+        <div className="stat-card">
+          <h3>{stats.active}</h3>
+          <p>Active Plans</p>
+        </div>
 
-            <option value="completed">
-              Completed
-            </option>
+        <div className="stat-card">
+          <h3>{stats.completed}</h3>
+          <p>Completed</p>
+        </div>
 
-            <option value="cancelled">
-              Cancelled
-            </option>
-          </select>
+        <div className="stat-card">
+          <h3>{stats.destinations}</h3>
+          <p>Destinations</p>
         </div>
       </div>
 
-      {/* TABLE HEADER */}
-      <div className="hidden md:flex justify-between items-center p-4 font-bold border-b bg-gray-100 rounded text-sm">
-        <span className="basis-1/4">
-          Title
-        </span>
-
-        <span className="basis-1/4">
-          Destination
-        </span>
-
-        <span className="basis-[15%]">
-          Status
-        </span>
-
-        <span className="basis-[15%]">
-          Start Date
-        </span>
-
-        <span className="basis-[15%]">
-          End Date
-        </span>
+      {/* FILTER */}
+      <div className="search-section">
+        <PlannerFilterBar
+          allPlanners={allPlanners}
+          setFilteredPlanners={setFilteredPlanners}
+        />
       </div>
 
-      {/* LOADING */}
-      {loading && (
-        <p className="text-center py-10">
-          Loading planners...
-        </p>
-      )}
-
-      {/* ERROR */}
-      {error && (
-        <p className="text-center text-red-500 py-10">
-          {error}
-        </p>
-      )}
-
       {/* EMPTY STATE */}
-      {!loading &&
-        !error &&
-        planners.length === 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center text-gray-500">
-            No planners found.
-          </div>
-        )}
+      {filteredPlanners.length === 0 ? (
+        <div className="text-center py-10">
+          <h3 className="text-xl font-semibold">
+            No planners found
+          </h3>
+          <p className="text-gray-500 mt-2">
+            Create your first planner to get started.
+          </p>
+        </div>
+      ) : (
+        <div className="planner-grid">
+          {filteredPlanners.map((plan) => (
+            <div
+              key={plan._id}
+              className="planner-card"
+            >
+              <div className="planner-card-header">
+                <h3>{plan.title}</h3>
 
-      {/* PLANNER LIST */}
-      {!loading &&
-        !error &&
-        planners.length > 0 && (
-          <div className="space-y-3">
-            {Array.isArray(planners) &&
-              planners.map((planner, index) => (
-                <PlannerCard
-                  key={planner._id}
-                  {...planner}
-                  className={`${
-                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                  } rounded-lg shadow-sm`}
-                />
-              ))}
-          </div>
-        )}
+                <span className="status-pill">
+                  {plan.status}
+                </span>
+              </div>
+
+              <div className="planner-content">
+                <p>📍 {plan.destination || "N/A"}</p>
+                <p>📅 {formatDate(plan.startDate)}</p>
+                <p>🏁 {formatDate(plan.endDate)}</p>
+              </div>
+
+              <div className="planner-actions">
+                <Link
+                  to={`/planner/details/${plan._id}`}
+                >
+                  <button className="view-btn">
+                    View
+                  </button>
+                </Link>
+
+                <Link
+                  to={`/dashboard/planner/${plan._id}`}
+                >
+                  <button className="edit-btn">
+                    <BiEdit />
+                    Edit
+                  </button>
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

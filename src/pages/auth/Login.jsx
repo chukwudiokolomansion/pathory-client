@@ -41,7 +41,7 @@ function Login() {
 
       console.log(response.data)
 
-      navigate("/private-page-example")
+      navigate("/dashboard")
 
     } catch (error) {
       console.log(error)
@@ -83,8 +83,9 @@ function Login() {
 
         <button type="submit">Login</button>
 
-        {errorMessage && <p>{errorMessage}</p>}
-        
+        {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+      
       </form>
       
     </div>

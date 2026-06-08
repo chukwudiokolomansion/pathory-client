@@ -1,62 +1,70 @@
 import { Link, useLocation } from "react-router-dom";
-import { useContext } from "react";
-import { AuthContext } from "../context/auth.context";
+import {
+  HiOutlineCalendar,
+  HiOutlineClipboardList,
+  HiOutlineUser,
+} from "react-icons/hi";
+
 
 function Sidebar() {
   const location = useLocation();
 
-  const { isLoggedIn } = useContext(AuthContext);
-
-  // Hide sidebar completely if user is not logged in
-  if (!isLoggedIn) {
-    return null;
-  }
-
-  const linkClasses = (path) =>
-    `block px-4 py-2 rounded-lg transition duration-200 ${
-      location.pathname === path
-        ? "bg-blue-600 text-white"
-        : "text-gray-700 hover:bg-gray-100"
-    }`;
+  const navItems = [
+    {
+      name: "Planners",
+      path: "/planners",
+      icon: <HiOutlineClipboardList size={22} />,
+    },
+    {
+      name: "Activities",
+      path: "/activities",
+      icon: <HiOutlineCalendar size={22} />,
+    },
+    {
+      name: "Profile",
+      path: "/users/profile",
+      icon: <HiOutlineUser size={22} />,
+    },
+  ];
 
   return (
-    <div className="sidebar bg-white w-64 min-h-screen shadow-md border-r p-4">
+    <aside className="sidebar">
+      <div className="sidebar-header">
+       
 
-      <h2 className="text-xl font-bold mb-6 text-blue-600">
-        Dashboard
-      </h2>
+        <h2>PATHORY</h2>
 
-      <ul className="space-y-2">
+        <p>Every Life Has A Story</p>
+      </div>
 
-        <li>
+      <nav>
+        {navItems.map((item) => (
           <Link
-            to="/dashboard"
-            className={linkClasses("/dashboard")}
+            key={item.path}
+            to={item.path}
+            className={`sidebar-link ${
+              location.pathname === item.path
+                ? "sidebar-active"
+                : ""
+            }`}
           >
-            📋 Planners
+            {item.icon}
+            <span>{item.name}</span>
           </Link>
-        </li>
+        ))}
+      </nav>
 
-        <li>
-          <Link
-            to="/activities"
-            className={linkClasses("/activities")}
-          >
-            🎯 Activities
-          </Link>
-        </li>
+      <div className="sidebar-footer">
+        <div className="journey-card">
+          <h4>Your Journey</h4>
+          <p>Keep building your story.</p>
 
-        <li>
-          <Link
-            to="/profile"
-            className={linkClasses("/profile")}
-          >
-            👤 User Profile
-          </Link>
-        </li>
-
-      </ul>
-    </div>
+          <div className="progress-bar">
+            <div className="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
   );
 }
 

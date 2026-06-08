@@ -1,279 +1,203 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import service from "../services/index.services";
+import { createPlannerSlug, convertSlugToName } from "../utils/index";
 
 
-const DEFAULT_PLANNER_FORM_VALUES = {
+const DEFAULT_PLANNER_FORM = {
+  plannerSlug: "",
+  plannerTitle: "",
   title: "",
-  description: "",
+  destination: "",
   startDate: "",
   endDate: "",
-  reminders: [],
-  destination: "",
   status: "pending",
+  inProgress: false,
 };
 
 function PlannerCreatePage() {
+
+  const [planner, setPlanner] = useState(DEFAULT_PLANNER_FORM);
   const navigate = useNavigate();
 
-  // Planner form state
-  const [planner, setPlanner] = useState({
-    ...DEFAULT_PLANNER_FORM_VALUES,
-  });
-
-  // Reminder input state
-  const [reminderInput, setReminderInput] =
-    useState("");
-
-  // Handle form changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
+  const { name, value, type, checked } = e.target;
 
-    setPlanner((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  setPlanner((prev) => ({
+    ...prev,
+    [name]: type === "checkbox" ? checked : value,
+  }));
+};
 
-  // Add reminder
-  const addReminder = () => {
-    if (!reminderInput) return;
-
-    setPlanner((prev) => ({
-      ...prev,
-      reminders: [
-        ...prev.reminders,
-        reminderInput,
-      ],
-    }));
-
-    setReminderInput("");
-  };
-
-  // Remove reminder
-  const removeReminder = (indexToRemove) => {
-    setPlanner((prev) => ({
-      ...prev,
-      reminders: prev.reminders.filter(
-        (_, index) => index !== indexToRemove
-      ),
-    }));
-  };
-
-  // Handle submit
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    try {
       const requestBody = {
-        ...planner,
-      };
+      ...planner,
+    };
 
-      const response = await service.post(
-        `planners`,
-        requestBody,
-        {
-          withCredentials: true,
-        }
-      );
 
-      const newPlanner = response.data;
-
-      navigate(
-        `/planners/details/${newPlanner._id}`
-      );
-    } catch (error) {
-      console.log(error);
-    }
+    service
+      .post(`/planners`, requestBody)
+      .then((res) => {
+        const newPlanner = res.data;
+        navigate(`/planners/details/${newPlanner._id}`);
+      })
+      .catch((err) => console.log(err));
   };
 
   return (
-    <div className="PlannerCreatePage p-8 pb-16 mb-10 mt-10 rounded-lg shadow-md flex flex-col h-full relative w-full max-w-3xl mx-auto bg-white">
-      {/* FORM */}
-      <form
+    <div className="PlannerCreatePage p-8 pb-16 mb-10 mt-10 rounded-lg shadow-md flex flex-col h-full relative w-full max-w-3xl mx-auto">
+    <div className="flex justify-center bg-white items-center mb-4 pt-8 absolute top-0 left-0 right-0 py-2 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 border-b border-gray-300 shadow-sm"></div>
+
+     <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 gap-4 overflow-y-auto mt-4 px-4"
+        className="grid grid-cols-1 gap-4 overflow-y-auto mt-12 px-4"
       >
-        <h3 className="text-2xl font-semibold text-gray-700 mb-6">
+        <h3 className="text-2xl font-semibold text-gray-700 mb-6 sticky left-0">
           Create Planner
         </h3>
 
-        {/* Title */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="title">
-            Title
-          </label>
+        <label
+          htmlFor="plannerSlug"
+          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
+        >
+          Planner Id
+        </label>
+        <input
+          type="text"
+          name="plannerSlug"
+          id="plannerSlug"
+          value={planner.plannerSlug}
+          onChange={handleChange}
+          disabled
+          className="border rounded p-2 w-full mb-6"
+        />
 
-          <input
-            type="text"
-            name="title"
-            id="title"
-            value={planner.title}
-            onChange={handleChange}
-            placeholder="Enter planner title"
-            className="border rounded p-2"
-            required
-          />
-        </div>
+        <label
+          htmlFor="plannerTitle"
+          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
+        >
+          Planner Name
+        </label>
+        <input
+          type="text"
+          name="plannerTitle"
+          id="plannerTitle"
+          value={planner.plannerTitle}
+          onChange={handleChange}
+          disabled
+          className="border rounded p-2 w-full mb-6"
+        />
 
-        {/* Description */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="description">
-            Description
-          </label>
+        <label
+          htmlFor="format"
+          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
+        >
+          Status
+        </label>
+        <select
+          name="status"
+          id="status"
+          value={planner.status}
+          onChange={handleChange}
+          className="border rounded p-2 w-full mb-6 bg-gray-50"
+        >
+          <option value="">-- Select Status --</option>
+          <option value="Pending">Pending</option>
+          <option value="Completed">Completed</option>
+        </select>
 
-          <textarea
-            name="description"
-            id="description"
-            value={planner.description}
-            onChange={handleChange}
-            placeholder="Enter planner description"
-            className="border rounded p-2 min-h-[120px]"
-          />
-        </div>
+        <label
+          htmlFor="destination"
+          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
+        >
+          Destination
+        </label>
+        <select
+          name="destination"
+          id="destination"
+          value={planner.destination}
+          onChange={handleChange}
+          className="border rounded p-2 w-full mb-6 bg-gray-50"
+        >
+          <option value="">-- Select Destination --</option>
+          <option value="Munich">Munich</option>
+          <option value="Paris">Paris</option>
+          <option value="Berlin">Berlin</option>
+        </select>
 
-        {/* Destination */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="destination">
-            Destination
-          </label>
+        <label
+          htmlFor="title"
+          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
+        >
+          Title
+        </label>
+        <select
+          name="title"
+          id="title"
+          value={planner.title}
+          onChange={handleChange}
+          className="border rounded p-2 w-full mb-6 bg-gray-50"
+        >
+          <option value="">-- Select Title --</option>
+          <option value="Trip to Paris">Trip to Paris</option>
+          <option value="Fitness Challenge">Fitness Challenge</option>
+          <option value="Graduation Preparation">Graduation Preparation</option>
+          <option value="Startup Launch">Startup Launch</option>
+          <option value="Family Reunion">Family Reunion</option>
+          <option value="Summer Vacation Planner">Summer Vacation Planner</option>
+        </select>
 
-          <input
-            type="text"
-            name="destination"
-            id="destination"
-            value={planner.destination}
-            onChange={handleChange}
-            placeholder="Enter destination"
-            className="border rounded p-2"
-          />
-        </div>
+        <label
+          htmlFor="startDate"
+          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
+        >
+          Start Date:
+        </label>
+        <input
+          type="date"
+          name="startDate"
+          id="startDate"
+          value={planner.startDate}
+          onChange={handleChange}
+          className="border rounded p-2 w-full mb-6 bg-gray-50 h-10"
+        />
 
-        {/* Start Date */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="startDate">
-            Start Date
-          </label>
+        <label
+          htmlFor="endDate"
+          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
+        >
+          End Date:
+        </label>
+        <input
+          type="date"
+          name="endDate"
+          id="endDate"
+          value={planner.endDate}
+          onChange={handleChange}
+          className="border rounded p-2 w-full mb-6 bg-gray-50 h-10"
+        />
 
-          <input
-            type="date"
-            name="startDate"
-            id="startDate"
-            value={planner.startDate}
-            onChange={handleChange}
-            className="border rounded p-2"
-            required
-          />
-        </div>
-
-        {/* End Date */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="endDate">
-            End Date
-          </label>
-
-          <input
-            type="date"
-            name="endDate"
-            id="endDate"
-            value={planner.endDate}
-            onChange={handleChange}
-            className="border rounded p-2"
-            required
-          />
-        </div>
-
-        {/* Status */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="status">
-            Status
-          </label>
-
-          <select
-            name="status"
-            id="status"
-            value={planner.status}
-            onChange={handleChange}
-            className="border rounded p-2"
+        <div className="flex items-center mt-6 mb-6">
+          <label
+            htmlFor="inProgress"
+            className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
           >
-            <option value="pending">
-              Pending
-            </option>
-
-            <option value="in-progress">
-              In Progress
-            </option>
-
-            <option value="completed">
-              Completed
-            </option>
-
-            <option value="cancelled">
-              Cancelled
-            </option>
-          </select>
-        </div>
-
-        {/* Reminders */}
-        <div className="flex flex-col gap-2">
-          <label>
-            Reminders
+            In Progress
           </label>
-
-          <div className="flex gap-2">
-            <input
-              type="datetime-local"
-              value={reminderInput}
-              onChange={(e) =>
-                setReminderInput(e.target.value)
-              }
-              className="border rounded p-2 flex-1"
-            />
-
-            <button
-              type="button"
-              onClick={addReminder}
-              className="bg-gray-700 hover:bg-gray-800 text-white px-4 rounded"
-            >
-              Add
-            </button>
-          </div>
-
-          {/* Reminder List */}
-          {planner.reminders.length > 0 && (
-            <div className="flex flex-col gap-2 mt-2">
-              {planner.reminders.map(
-                (reminder, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between border rounded p-2"
-                  >
-                    <span>
-                      {new Date(
-                        reminder
-                      ).toLocaleString()}
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        removeReminder(index)
-                      }
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )
-              )}
-            </div>
-          )}
+          <input
+  type="checkbox"
+  name="inProgress"
+  id="inProgress"
+  checked={planner.inProgress}
+  onChange={handleChange}
+/>
         </div>
 
-        {/* Submit */}
-        <button
+         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-4"
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-4 transition duration-150 ease-in-out"
         >
           Create Planner
         </button>
