@@ -1,201 +1,181 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import service from "../services/index.services";
-import { createPlannerSlug, convertSlugToName } from "../utils/index";
-
 
 const DEFAULT_PLANNER_FORM = {
-  plannerSlug: "",
-  plannerTitle: "",
+  activity: "",
   title: "",
+  description: "",
   destination: "",
   startDate: "",
   endDate: "",
   status: "pending",
-  inProgress: false,
 };
 
 function PlannerCreatePage() {
-
-  const [planner, setPlanner] = useState(DEFAULT_PLANNER_FORM);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-  const { name, value, type, checked } = e.target;
+  const [planner, setPlanner] = useState(DEFAULT_PLANNER_FORM);
+  const [activities, setActivities] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  setPlanner((prev) => ({
-    ...prev,
-    [name]: type === "checkbox" ? checked : value,
-  }));
-};
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const response = await service.get("/activities");
+        setActivities(response.data);
+      } catch (error) {
+        console.error("Error fetching activities:", error);
+      }
+    };
+
+    fetchActivities();
+  }, []);
+
+  const handleChange = ({ target: { name, value } }) => {
+    setPlanner((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const response = await service.post(
-      "/planners",
-      planner
-    );
+    try {
+      const response = await service.post("/planners", planner);
 
-    navigate(`/planners/details/${response.data._id}`);
-  } catch (error) {
-    console.error(error);
-  }
-};
+      navigate(`/planners/details/${response.data._id}`);
+    } catch (error) {
+      console.error(error);
+
+      setErrorMessage(
+        error.response?.data?.message || "Failed to create planner"
+      );
+    }
+  };
 
   return (
-    <div className="PlannerCreatePage p-8 pb-16 mb-10 mt-10 rounded-lg shadow-md flex flex-col h-full relative w-full max-w-3xl mx-auto">
-    <div className="flex justify-center bg-white items-center mb-4 pt-8 absolute top-0 left-0 right-0 py-2 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 border-b border-gray-300 shadow-sm"></div>
+    <div className="max-w-3xl mx-auto p-8 bg-white shadow rounded-lg">
+      <h2 className="text-2xl font-bold mb-6">Create Planner</h2>
 
-     <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 gap-4 overflow-y-auto mt-12 px-4"
-      >
-        <h3 className="text-2xl font-semibold text-gray-700 mb-6 sticky left-0">
-          Create Planner
-        </h3>
+      {errorMessage && (
+        <p className="mb-4 text-red-500">{errorMessage}</p>
+      )}
 
-        <label
-          htmlFor="plannerSlug"
-          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
-        >
-          Planner Id
-        </label>
-        <input
-          type="text"
-          name="plannerSlug"
-          id="plannerSlug"
-          value={planner.plannerSlug}
-          onChange={handleChange}
-          disabled
-          className="border rounded p-2 w-full mb-6"
-        />
-
-        <label
-          htmlFor="plannerTitle"
-          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
-        >
-          Planner Name
-        </label>
-        <input
-          type="text"
-          name="plannerTitle"
-          id="plannerTitle"
-          value={planner.plannerTitle}
-          onChange={handleChange}
-          disabled
-          className="border rounded p-2 w-full mb-6"
-        />
-
-        <label
-          htmlFor="format"
-          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
-        >
-          Status
-        </label>
-        <select
-          name="status"
-          id="status"
-          value={planner.status}
-          onChange={handleChange}
-          className="border rounded p-2 w-full mb-6 bg-gray-50"
-        >
-          <option value="">-- Select Status --</option>
-          <option value="Pending">Pending</option>
-          <option value="Completed">Completed</option>
-        </select>
-
-        <label
-          htmlFor="destination"
-          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
-        >
-          Destination
-        </label>
-        <select
-          name="destination"
-          id="destination"
-          value={planner.destination}
-          onChange={handleChange}
-          className="border rounded p-2 w-full mb-6 bg-gray-50"
-        >
-          <option value="">-- Select Destination --</option>
-          <option value="Munich">Munich</option>
-          <option value="Paris">Paris</option>
-          <option value="Berlin">Berlin</option>
-        </select>
-
-        <label
-          htmlFor="title"
-          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
-        >
-          Title
-        </label>
-        <select
-          name="title"
-          id="title"
-          value={planner.title}
-          onChange={handleChange}
-          className="border rounded p-2 w-full mb-6 bg-gray-50"
-        >
-          <option value="">-- Select Title --</option>
-          <option value="Trip to Paris">Trip to Paris</option>
-          <option value="Fitness Challenge">Fitness Challenge</option>
-          <option value="Graduation Preparation">Graduation Preparation</option>
-          <option value="Startup Launch">Startup Launch</option>
-          <option value="Family Reunion">Family Reunion</option>
-          <option value="Summer Vacation Planner">Summer Vacation Planner</option>
-        </select>
-
-        <label
-          htmlFor="startDate"
-          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
-        >
-          Start Date:
-        </label>
-        <input
-          type="date"
-          name="startDate"
-          id="startDate"
-          value={planner.startDate}
-          onChange={handleChange}
-          className="border rounded p-2 w-full mb-6 bg-gray-50 h-10"
-        />
-
-        <label
-          htmlFor="endDate"
-          className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
-        >
-          End Date:
-        </label>
-        <input
-          type="date"
-          name="endDate"
-          id="endDate"
-          value={planner.endDate}
-          onChange={handleChange}
-          className="border rounded p-2 w-full mb-6 bg-gray-50 h-10"
-        />
-
-        <div className="flex items-center mt-6 mb-6">
-          <label
-            htmlFor="inProgress"
-            className="text-gray-600 text-left ml-1 -mb-2 text-l font-bold"
-          >
-            In Progress
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="block mb-1 font-semibold">
+            Activity
           </label>
-          <input
-  type="checkbox"
-  name="inProgress"
-  id="inProgress"
-  checked={planner.inProgress}
-  onChange={handleChange}
-/>
+          <select
+            name="activity"
+            value={planner.activity}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          >
+            <option value="">Select Activity</option>
+
+            {activities.map((activity) => (
+              <option key={activity._id} value={activity._id}>
+                {activity.title}
+              </option>
+            ))}
+          </select>
         </div>
 
-         <button
+        <div>
+          <label className="block mb-1 font-semibold">
+            Title
+          </label>
+          <input
+            type="text"
+            name="title"
+            value={planner.title}
+            onChange={handleChange}
+            placeholder="Enter planner title"
+            className="w-full p-2 border rounded"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-semibold">
+            Description
+          </label>
+          <textarea
+            name="description"
+            value={planner.description}
+            onChange={handleChange}
+            rows={4}
+            placeholder="Enter description"
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-semibold">
+            Destination
+          </label>
+          <input
+            type="text"
+            name="destination"
+            value={planner.destination}
+            onChange={handleChange}
+            placeholder="Enter destination"
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-semibold">
+            Start Date
+          </label>
+          <input
+            type="date"
+            name="startDate"
+            value={planner.startDate}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-semibold">
+            End Date
+          </label>
+          <input
+            type="date"
+            name="endDate"
+            value={planner.endDate}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-semibold">
+            Status
+          </label>
+          <select
+            name="status"
+            value={planner.status}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          >
+            <option value="pending">Pending</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-4 transition duration-150 ease-in-out"
+          className="w-full py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
         >
           Create Planner
         </button>
