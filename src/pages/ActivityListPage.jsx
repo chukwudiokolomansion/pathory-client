@@ -86,15 +86,15 @@ function ActivityListPage() {
         {activities.map((activity) => (
           <div key={activity._id} className="bg-white rounded-lg shadow p-4">
             <ActivityCard {...activity} />
-
+                 
             <div className="flex gap-2 mt-4">
-              <Link to="/activities/details/:activityId">
+              <Link to={`/activities/details/${activity._id}`}>
                 <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
                   View
                 </button>
               </Link>
 
-              <Link to="/activities/edit/:activityId">
+              <Link to={`/activities/edit/${activity._id}`}>
                 <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded flex items-center gap-1">
                   <BiEdit />
                   Edit

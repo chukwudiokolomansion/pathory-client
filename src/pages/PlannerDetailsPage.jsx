@@ -4,6 +4,7 @@ import service from "../services/index.services";
 
 import ActivityCard from "../components/ActivityCard";
 import ActivityCreateForm from "../components/ActivityCreateForm";
+import { HashLoader } from "react-spinners";
 
 
 function PlannerDetailsPage() {
@@ -135,18 +136,20 @@ useEffect(() => {
               {/* ACTIONS */}
               <div className="flex flex-col items-center gap-2 mt-6 w-2/3 mx-auto">
 
-                <NavLink to={`/planners/edit/${plannerId}`} className="w-full">
+                <NavLink to= "/planners/edit/:plannerId" className="w-full">
                   <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 w-full rounded">
                     Edit Planner
                   </button>
                 </NavLink>
 
+                <NavLink to= "/activities/create" className="w-full">
                 <button
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 w-full rounded"
                   onClick={() => setShowDrawer(true)}
                 >
                   Add Activity (Memory)
                 </button>
+                </NavLink>
 
               </div>
 
@@ -158,7 +161,9 @@ useEffect(() => {
         {/* ACTIVITIES LIST */}
         <h2 className="text-xl mb-4">Activities (Memories)</h2>
 
-        {loading && <div>Loading...</div>}
+        {loading && <div><div className="profile-loader">
+        <HashLoader color="#8b5cf6" size={80} />
+      </div></div>}
 
         {activities &&
           activities.map((activity) => (

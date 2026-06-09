@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import service from "../services/index.services";
+import { HashLoader } from "react-spinners";
 
 
 const DEFAULT_PLANNER = {
+  activity: "",
   title: "",
   description: "",
   startDate: "",
@@ -11,7 +13,6 @@ const DEFAULT_PLANNER = {
   destination: "",
   status: "pending",
 };
-
 function PlannerEditPage() {
 
   const [planner, setPlanner] = useState(DEFAULT_PLANNER);
@@ -20,24 +21,31 @@ function PlannerEditPage() {
 
   const { plannerId } = useParams();
   const navigate = useNavigate();
-
+const [activities, setActivities] = useState([]);
   // FETCH PLANNER
   useEffect(() => {
-    service
-    .get(`/planners/${plannerId}`)
-      .then((res) => {
-        const data = res.data;
+  const fetchPlanner = async () => {
+    try {
+      const { data } = await service.get(`/planners/${plannerId}`);
 
-        setPlanner({
-          ...data,
-          startDate: data.startDate?.split("T")[0],
-          endDate: data.endDate?.split("T")[0],
-        });
+      setPlanner({
+        activity: data.activity?._id || data.activity || "",
+        title: data.title || "",
+        description: data.description || "",
+        destination: data.destination || "",
+        status: data.status || "pending",
+        startDate: data.startDate?.split("T")[0] || "",
+        endDate: data.endDate?.split("T")[0] || "",
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setLoading(false);
-      })
-      .catch((err) => console.log(err));
-  }, [plannerId]);
+  fetchPlanner();
+}, [plannerId]);
 
   // HANDLE CHANGE
   const handleChange = (e) => {
@@ -50,30 +58,61 @@ function PlannerEditPage() {
   };
 
   // UPDATE PLANNER
-  const handleSubmit = async (e) => {
+
+const handleSubmit = async (e) => {
   e.preventDefault();
 
   try {
+    const payload = {
+      activity: planner.activity,
+      title: planner.title,
+      description: planner.description,
+      destination: planner.destination,
+      startDate: planner.startDate,
+      endDate: planner.endDate,
+      status: planner.status,
+    };
+
     await service.patch(
       `/planners/${plannerId}`,
-      planner
+      payload
     );
 
     navigate(`/planners/details/${plannerId}`);
   } catch (error) {
-    console.error(error);
+    console.log(error);
   }
 };
 
   // DELETE PLANNER
-  const handleDelete = () => {
-    service
-      .delete(`/planners/${plannerId}`)
-      .then(() => navigate("/planners"))
-      .catch((err) => console.log(err));
+ const handleDelete = async () => {
+  try {
+    await service.delete(`/planners/${plannerId}`);
+    navigate("/planners");
+  } catch (error) {
+    console.error(error);
+  }
+};
+useEffect(() => {
+  const fetchActivities = async () => {
+    try {
+      const { data } = await service.get("/activities");
+      setActivities(data);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  if (loading) return <div>Loading...</div>;
+  fetchActivities();
+}, []);
+
+  if (loading) {
+    return (
+      <div className="profile-loader">
+        <HashLoader color="#8b5cf6" size={80} />
+      </div>
+    );
+  }
 
   return (
     <div className="PlannerEditPage p-8 max-w-3xl mx-auto bg-white shadow-md rounded-lg relative">
@@ -113,17 +152,45 @@ function PlannerEditPage() {
 
       {/* FORM */}
       <form onSubmit={handleSubmit} className="space-y-4">
+<div>
+  <label className="block mb-1 font-semibold">
+    Activity
+  </label>
 
-        {/* TITLE */}
-        <input
-          type="text"
-          name="title"
-          value={planner.title}
-          onChange={handleChange}
-          placeholder="Title"
-          className="border p-2 w-full rounded"
-        />
+  <select
+    name="activity"
+    value={planner.activity}
+    onChange={handleChange}
+    className="border p-2 w-full rounded"
+    required
+  >
+    <option value="">Select Activity</option>
 
+    {activities.map((activity) => (
+      <option
+        key={activity._id}
+        value={activity._id}
+      >
+        {activity.title}
+      </option>
+    ))}
+  </select>
+</div>
+<div>
+  <label className="block mb-1 font-semibold">
+    Title
+  </label>
+
+  <input
+    type="text"
+    name="title"
+    value={planner.title}
+    onChange={handleChange}
+    placeholder="Title"
+    className="border p-2 w-full rounded"
+    required
+  />
+</div>
         {/* DESCRIPTION */}
         <textarea
           name="description"

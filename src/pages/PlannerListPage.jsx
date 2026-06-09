@@ -47,11 +47,18 @@ function PlannerListPage() {
 
   const stats = useMemo(() => {
     return {
-      total: allPlanners.length,
-      active: allPlanners.filter((plan) => plan.status === "Active").length,
-      completed: allPlanners.filter((plan) => plan.status === "Completed")
-        .length,
-      destinations: new Set(allPlanners.map((plan) => plan.destination)).size,
+      active: allPlanners.filter(
+        (planner) => planner.status?.toLowerCase() === "active",
+      ).length,
+
+      completed: allPlanners.filter(
+        (planner) => planner.status?.toLowerCase() === "completed",
+      ).length,
+      /*total: allPlanners.length,
+      active: allPlanners.filter((planner) => planner.status === "Active").length,
+      completed: allPlanners.filter((planner) => planner.status === "Completed")
+        .length,*/
+      destinations: new Set(allPlanners.map((planner) => planner.destination)).size,
     };
   }, [allPlanners]);
 
@@ -61,14 +68,7 @@ function PlannerListPage() {
     return new Date(date).toLocaleDateString();
   };
 
-  if (loading) {
-    return (
-      <div className="loader-container">
-        <HashLoader color="#ff6b35" size={90} />
-        <p className="loading-text">Loading...</p>
-      </div>
-    );
-  }
+  
   const handleDelete = async (plannerId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this planner?",
@@ -90,6 +90,14 @@ function PlannerListPage() {
       console.error("Error deleting planner:", error);
     }
   };
+  if (loading) {
+    return (
+      <div className="loader-container">
+        <HashLoader color="#ff6b35" size={90} />
+        <p className="loading-text">Loading...</p>
+      </div>
+    );
+  }
   return (
     <div className="planner-dashboard">
       {/* HERO */}
@@ -149,26 +157,26 @@ function PlannerListPage() {
         </div>
       ) : (
         <div className="planner-grid">
-          {filteredPlanners.map((plan) => (
-            <div key={plan._id} className="planner-card">
+          {filteredPlanners.map((planner) => (
+            <div key={planner._id} className="planner-card">
               <div className="planner-card-header">
-                <h3>{plan.title}</h3>
+                <h3>{planner.title}</h3>
 
-                <span className="status-pill">{plan.status}</span>
+                <span className="status-pill">{planner.status}</span>
               </div>
 
               <div className="planner-content">
-                <p>📍 {plan.destination || "N/A"}</p>
-                <p>📅 {formatDate(plan.startDate)}</p>
-                <p>🏁 {formatDate(plan.endDate)}</p>
+                <p>📍 {planner.destination || "N/A"}</p>
+                <p>📅 {formatDate(planner.startDate)}</p>
+                <p>🏁 {formatDate(planner.endDate)}</p>
               </div>
 
               <div className="planner-actions flex gap-2">
-                <Link to="/planners/details/:plannerId">
+                <Link to={`/planners/details/${planner._id}`}>
                   <button className="view-btn">View</button>
                 </Link>
 
-                <Link to="/planners/edit/:plannerId">
+                <Link to={`/planners/edit/${planner._id}`}>
                   <button className="edit-btn flex items-center gap-1">
                     <BiEdit />
                     Edit
@@ -176,7 +184,7 @@ function PlannerListPage() {
                 </Link>
 
                 <button
-                  onClick={() => handleDelete(plan._id)}
+                  onClick={() => handleDelete(planner._id)}
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center gap-1"
                 >
                   <BiTrash />
