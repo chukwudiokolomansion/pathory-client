@@ -6,7 +6,15 @@ const DEFAULT_ACTIVITY_FORM_VALUES = {
   title: "",
   aiDescription: "",
   activityType: "",
-  location: "",
+
+  location: {
+    lat: "",
+    lng: "",
+    city: "",
+    country: "",
+    address: "",
+  },
+
   image: "",
   video: "",
   tags: "",
@@ -31,13 +39,29 @@ function ActivityCreateForm({
   }, [plannerId]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+  const { name, value } = e.target;
 
+  if (
+    ["lat", "lng", "city", "country", "address"].includes(
+      name
+    )
+  ) {
     setActivity((prev) => ({
       ...prev,
-      [name]: value,
+      location: {
+        ...prev.location,
+        [name]: value,
+      },
     }));
-  };
+
+    return;
+  }
+
+  setActivity((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,13 +70,34 @@ function ActivityCreateForm({
 
     try {
       const requestBody = {
-        ...activity,
-        tags: activity.tags
-          ? activity.tags
-              .split(",")
-              .map((tag) => tag.trim())
-          : [],
-      };
+  title: activity.title,
+  aiDescription: activity.aiDescription,
+  activityType: activity.activityType,
+
+  location: {
+    lat: Number(activity.location.lat),
+    lng: Number(activity.location.lng),
+    city: activity.location.city,
+    country: activity.location.country,
+    address: activity.location.address,
+  },
+
+  image: activity.image
+    ? [activity.image]
+    : [],
+
+  video: activity.video
+    ? [activity.video]
+    : [],
+
+  tag: activity.tags
+    ? activity.tags
+        .split(",")
+        .map((tag) => tag.trim())
+    : [],
+
+  weather: activity.weather,
+};
 
       const response = await service.post(
         "/activities",
@@ -145,46 +190,103 @@ function ActivityCreateForm({
               Select type
             </option>
             <option value="travel">
-              Travel
+              travel
             </option>
             <option value="food">
-              Food
+              food
             </option>
             <option value="fitness">
-              Fitness
+              fitness
             </option>
             <option value="study">
-              Study
+              study
             </option>
             <option value="social">
-              Social
+              social
             </option>
             <option value="adventure">
-              Adventure
+              adventure
             </option>
             <option value="work">
-              Work
-            </option>
-            <option value="other">
-              Other
+              work
             </option>
           </select>
         </div>
 
         {/* Location */}
         <div>
-          <label className="block mb-1 font-medium">
-            Location
-          </label>
+  <label className="block mb-1 font-medium">
+    Latitude
+  </label>
 
-          <input
-            type="text"
-            name="location"
-            value={activity.location}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
+  <input
+    type="number"
+    step="any"
+    name="lat"
+    value={activity.location.lat}
+    onChange={handleChange}
+    required
+    className="w-full border rounded p-2"
+  />
+</div>
+
+<div>
+  <label className="block mb-1 font-medium">
+    Longitude
+  </label>
+
+  <input
+    type="number"
+    step="any"
+    name="lng"
+    value={activity.location.lng}
+    onChange={handleChange}
+    required
+    className="w-full border rounded p-2"
+  />
+</div>
+
+<div>
+  <label className="block mb-1 font-medium">
+    City
+  </label>
+
+  <input
+    type="text"
+    name="city"
+    value={activity.location.city}
+    onChange={handleChange}
+    className="w-full border rounded p-2"
+  />
+</div>
+
+<div>
+  <label className="block mb-1 font-medium">
+    Country
+  </label>
+
+  <input
+    type="text"
+    name="country"
+    value={activity.location.country}
+    onChange={handleChange}
+    className="w-full border rounded p-2"
+  />
+</div>
+
+<div>
+  <label className="block mb-1 font-medium">
+    Address
+  </label>
+
+  <input
+    type="text"
+    name="address"
+    value={activity.location.address}
+    onChange={handleChange}
+    className="w-full border rounded p-2"
+  />
+</div>
 
         {/* Image URL */}
         <div>

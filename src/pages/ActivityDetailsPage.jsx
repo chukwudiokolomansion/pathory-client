@@ -30,8 +30,28 @@ function ActivityDetailsPage() {
       <h1>{activity.title}</h1>
 
       <p>{activity.aiDescription}</p>
+<div>
+  <h3>Location</h3>
 
-      <p>{activity.location}</p>
+  <p>
+    {activity.location?.address}
+  </p>
+
+  <p>
+    {activity.location?.city},
+    {" "}
+    {activity.location?.country}
+  </p>
+
+  <p>
+    Lat: {activity.location?.lat}
+  </p>
+
+  <p>
+    Lng: {activity.location?.lng}
+  </p>
+</div>
+      
 
       {activity.image && (
         <img

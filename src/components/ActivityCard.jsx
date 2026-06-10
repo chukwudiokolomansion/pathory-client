@@ -13,12 +13,16 @@ function ActivityCard(activity) {
         <div className="activity-content">
           <h3>{activity.title}</h3>
 
-          <p className="activity-type">
-            {activity.type}
+          <p className="activity-type">{activity.type}</p>
+
+          <p>📍 {activity.location?.address}</p>
+
+          <p>
+            🌍 {activity.location?.city}, {activity.location?.country}
           </p>
 
           <p>
-            📍 {activity.city}, {activity.country}
+            📌 {activity.location?.lat}, {activity.location?.lng}
           </p>
         </div>
       </div>
